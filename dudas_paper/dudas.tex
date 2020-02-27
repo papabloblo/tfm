@@ -1,0 +1,131 @@
+\PassOptionsToPackage{unicode=true}{hyperref} % options for packages loaded elsewhere
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provides euro and other symbols
+\else % if luatex or xelatex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage[]{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\usepackage{hyperref}
+\hypersetup{
+            pdftitle={Dudas del paper},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+% set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+
+
+\title{Dudas del paper}
+\author{}
+\date{\vspace{-2.5em}}
+
+\begin{document}
+\maketitle
+
+La ecuación \((2)\) espresa el nivel de llenado de un contenedor
+\(c\in C\) transcurridos \(d\) días desde la última recogida:
+
+\[
+f(c, d) = \max(1, \quad q(c)\cdot d + b(c))
+\]
+
+Entiendo que la función es \(f:C\times D\rightarrow [0,1]\). Mi duda es
+si en vez del máximo no debería ser el mínimo en la función anterior.
+Además, en el párrafo siguiente se especifica que
+\(q(c)\cdot d + b(c) > 1\) supone el desborde del contenedor.
+
+La ecuación \((10)\) aparece como
+
+\[
+um_{v\in \mathcal{V}} Y_{ih}^v \leq 1, \quad i\in P, h\in\mathcal{H}
+\]
+
+Imagino que será un error de la transcripción en Latex y que sería un
+sumatorio, ¿verdad?
+
+\[
+\sum_{v\in \mathcal{V}} Y_{ih}^v \leq 1, \quad i\in P, h\in\mathcal{H}
+\]
+
+Entiendo qué trata de representar el conjunto \(\mathcal{D}_{ih}\) pero
+no termino de entender cómo interpretar la fórmula \((14)\):
+
+\[
+\mathcal{D}_{ih} = \left\{ d < \frac{h}{\sum_{v\in \mathcal{V}} Y_{id}^v} \right\}
+\]
+
+En la ecuación \((15)\), \(\mathcal{H}_i\) se refiere al número de días
+que lleva el contenedor \(i\in C\) sin recogerse al inicio del horizonte
+temporal. En el párrafo justo depués de la ecuación \((4)\) ¿no se
+define este valor como \(d_i\)?
+
+La función objetivo definida en \((16)\), ¿no debería ser una
+maximización?
+
+\[
+\max \sum_{v\in \mathcal{V}} \sum_{i\in P}\sum_{h\in \mathcal{H}} f_i(\eta_{ih})\cdot Y_{ih}^v
+\]
+
+Se asume que el llenado de los contenedores se produce de forma lineal.
+Esta asunción se hace basada en datos históricos o se hace alguna
+estimación (por ejemplo, regresión lineal)?¿Cómo se calcula la tasa de
+llenado \(q(c)\)?
+
+En la obtención de las distancias obtenidas de la API Distance Matrix de
+Google Maps, ¿se tiene en cuenta el día o es un valor genérico?
+
+EN la comparativa entre el modelo matemático y la solución heurística
+(tabla 1), el día el modelo matemático tiene un nivel de llenado
+inferior. Supongo que, teóricamente, en este día, el modelo matemático
+debería comportarse mejor y, si no es así, es por el límite de 2 horas
+en la ejecución del CEPLEX.
+
+\end{document}

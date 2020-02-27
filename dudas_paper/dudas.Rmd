@@ -1,0 +1,52 @@
+---
+title: "Dudas del paper"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+La ecuación $(2)$ espresa el nivel de llenado de un contenedor $c\in C$ transcurridos $d$ días desde la última recogida:
+
+$$
+f(c, d) = \max(1, \quad q(c)\cdot d + b(c))
+$$
+
+Entiendo que la función es $f:C\times D\rightarrow [0,1]$. Mi duda es si en vez del máximo no debería ser el mínimo en la función anterior. Además, en el párrafo siguiente se especifica que $q(c)\cdot d + b(c) > 1$ supone el desborde del contenedor.
+
+La ecuación $(10)$ aparece como
+
+$$
+um_{v\in \mathcal{V}} Y_{ih}^v \leq 1, \quad i\in P, h\in\mathcal{H}
+$$
+
+Imagino que será un error de la transcripción en Latex y que sería un sumatorio, ¿verdad?
+
+$$
+\sum_{v\in \mathcal{V}} Y_{ih}^v \leq 1, \quad i\in P, h\in\mathcal{H}
+$$
+
+Entiendo qué trata de representar el conjunto $\mathcal{D}_{ih}$ pero no termino de entender cómo interpretar la fórmula $(14)$:
+
+$$
+\mathcal{D}_{ih} = \left\{ d < \frac{h}{\sum_{v\in \mathcal{V}} Y_{id}^v} \right\}
+$$
+
+En la ecuación $(15)$, $\mathcal{H}_i$ se refiere al número de días que lleva el contenedor $i\in C$ sin recogerse al inicio del horizonte temporal. En el párrafo justo depués de la ecuación $(4)$ ¿no se define este valor como $d_i$?
+
+La función objetivo definida en $(16)$, ¿no debería ser una maximización?
+
+$$
+\max \sum_{v\in \mathcal{V}} \sum_{i\in P}\sum_{h\in \mathcal{H}} f_i(\eta_{ih})\cdot Y_{ih}^v
+$$
+
+
+Se asume que el llenado de los contenedores se produce de forma lineal. Esta asunción se hace basada en datos históricos o se hace alguna estimación (por ejemplo, regresión lineal)?¿Cómo se calcula la tasa de llenado $q(c)$?
+
+En la obtención de las distancias obtenidas de la API Distance Matrix de Google Maps, ¿se tiene en cuenta el día o es un valor genérico?
+
+EN la comparativa entre el modelo matemático y la solución heurística (tabla 1), el día el modelo matemático tiene un nivel de llenado inferior. Supongo que, teóricamente, en este día, el modelo matemático debería comportarse mejor y, si no es así, es por el límite de 2 horas en la ejecución del CEPLEX.
+
+ 
