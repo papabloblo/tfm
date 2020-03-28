@@ -13,6 +13,7 @@ class waste_collection:
         self.pickup_points = [i for i in self.pickup_points if i not in self.ini_points]
         #self.fill_ini = dict.fromkeys(self.pickup_points, 0)
         self.fill_ini = self.fill_rate.copy()
+        self.read_times2()
 
 
     def read_filling_rates(self, file_filling_rates):
@@ -42,15 +43,34 @@ class waste_collection:
         times = times.append(times0, ignore_index=True)
         return times
 
-    def time(self, orig, dest):
+    def read_times2(self):
+        dist = {}
+        orig = list(set(self.times['origen'].to_list()))
+
+        for o in orig:
+            valores = self.times[self.times['origen'] == o]['tiempo'].to_list()
+            destinos = self.times[self.times['origen'] == o]['destino'].to_list()
+            dist[o] = {destinos[i]: valores[i] for i in range(len(valores))}
+        self.dist = dist
+
+
+
+    def time_old(self, orig, dest):
         return self.times[(self.times['origen'] == orig) & (self.times['destino'] == dest)]["tiempo"].values[0]
+
+    def time(self, orig, dest):
+        return self.dist[orig][dest]
 
     def fill_level(self, point, days, fill_ini=True):
         if fill_ini is False:
             fill_ini = 0
         else:
             fill_ini = self.fill_ini[point]
-        return min(1, self.fill_rate[point]*days + fill_ini)
+        f = self.fill_rate[point]*days + fill_ini
+        if f > 1:
+            f = 1-f
+        #return min(1, self.fill_rate[point]*days + fill_ini)
+        return f
 
 
 #
