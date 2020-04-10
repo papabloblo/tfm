@@ -76,6 +76,8 @@ class Route:
         time -= self.waste.time_points(self.__route[position - 1], self.__route[position])
         time -= self.waste.time_points(self.__route[position], self.__route[position + 1])
 
+        time += self.waste.time_points(new_route[position - 1], new_route[position])
+
         self.__route = new_route
         self.__time = time
 
@@ -89,13 +91,15 @@ class RouteCollection:
                  orig,
                  dest,
                  horizon=6,
-                 routes=None):
+                 routes=None,
+                 max_time=6.5*60*60):
         self.waste_collection = waste_collection
         self.horizon = horizon
         self.orig = orig
         self.dest = dest
         self.collection = self.create(routes)
         self.waste_collected_point = self.calculate_waste_collected_point()
+        self.max_time = max_time
 
     def create(self, routes):
 
@@ -132,6 +136,10 @@ class RouteCollection:
 
     def change_point(self, point, h, position):
         self.collection[h].change_point(point, position)
+        self.update_waste_collected_point()
+
+    def remove_point(self, h, position):
+        self.collection[h].remove_point(position)
         self.update_waste_collected_point()
 
     def update_route(self, h, new_route):
@@ -189,7 +197,7 @@ class RouteCollection:
 
         return sum(waste_collected.values())
 
-    def add_point_waste_collected(self, point, h):
+    def add_point_h_waste_collected(self, point, h):
 
         waste_collected = self.waste_collected_point.copy()
 
@@ -202,6 +210,11 @@ class RouteCollection:
 
         return self.waste_collected(waste_collected)
 
+    def add_point_waste_collected(self, point, h=None):
+        if h is None:
+            h = self.point_h_available(point)
+        return {h2: self.add_point_h_waste_collected(point, h2) for h2 in h}
+
     def h_without_point(self, point):
         routes = self.routes()
         return [h for h, r in enumerate(routes) if point not in r]
@@ -209,3 +222,31 @@ class RouteCollection:
     def h_with_point(self, point):
         routes = self.routes()
         return [h for h, r in enumerate(routes) if point in r]
+
+    def h_add_point_max_time(self, point):
+        h = range(self.horizon)
+        routes = self.routes()
+        h_new = []
+        for h2 in h:
+            current_time = self.time_h()[h2]
+            min_new_time = self.waste_collection.min_time_point(point, routes[h2])
+            if current_time + min_new_time <= self.max_time:
+                h_new.append(h2)
+        return h_new
+
+    def point_h_available(self, point):
+        h = set(self.h_without_point(point))
+        h_constraint_time = set(self.h_add_point_max_time(point))
+
+        h = list(h.intersection(h_constraint_time))
+        h.sort()
+
+        return h
+
+    def time_constraint(self, route):
+        return max(route.time_h()) <= self.max_time
+
+    def filter_routes_time_constraint(self, routes):
+        return [r for r in routes if self.time_constraint(r) is True]
+
+
