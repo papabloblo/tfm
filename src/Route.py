@@ -142,6 +142,14 @@ class RouteCollection:
         self.collection[h].remove_point(position)
         self.update_waste_collected_point()
 
+    def swap_point(self, h1, h2, position1, position2):
+        routes = self.routes()
+        p1 = routes[h1][position1]
+        p2 = routes[h2][position2]
+        self.collection[h1].change_point(p2, position1)
+        self.collection[h2].change_point(p1, position2)
+        self.update_waste_collected_point()
+
     def update_route(self, h, new_route):
         self.collection[h].update(new_route)
         self.update_waste_collected_point()
@@ -236,9 +244,12 @@ class RouteCollection:
 
     def point_h_available(self, point):
         h = set(self.h_without_point(point))
-        h_constraint_time = set(self.h_add_point_max_time(point))
+        if max(self.time_h()) <= self.max_time:
+            h_constraint_time = set(self.h_add_point_max_time(point))
 
-        h = list(h.intersection(h_constraint_time))
+            h = list(h.intersection(h_constraint_time))
+        else:
+            h = [h2 for h2 in h if self.time_h()[h2] <= self.max_time]
         h.sort()
 
         return h

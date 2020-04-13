@@ -70,3 +70,9 @@ class WasteCollection:
         times = [t for p, t in times.items() if p in points_dest]
         return min(times)
 
+a[2181]
+p = random.choice(waste_collection.pickup_points)
+print(p)
+fill_r = waste_collection.fill_rate[p]
+fill_ini = waste_collection.fill_ini[p]
+print((1-fill_ini)/fill_r)
