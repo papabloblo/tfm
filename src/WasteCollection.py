@@ -1,4 +1,5 @@
 import csv
+import math
 
 class WasteCollection:
     def __init__(self, file_filling_rates, file_times, ini_points=None):
@@ -57,6 +58,12 @@ class WasteCollection:
     def time_points(self, orig, dest):
         return self.times[orig][dest]
 
+    def overflowing_day(self, point):
+        return math.ceil((1 - self.fill_ini[point])/self.fill_rate[point])
+
+    def real_fill_level(self, point, h):
+        return self.fill_ini[point] + self.fill_rate[point]*h
+
     def fill_level(self, point, days, fill_ini=None):
         if fill_ini is None:
             fill_ini = 0
@@ -70,9 +77,3 @@ class WasteCollection:
         times = [t for p, t in times.items() if p in points_dest]
         return min(times)
 
-a[2181]
-p = random.choice(waste_collection.pickup_points)
-print(p)
-fill_r = waste_collection.fill_rate[p]
-fill_ini = waste_collection.fill_ini[p]
-print((1-fill_ini)/fill_r)

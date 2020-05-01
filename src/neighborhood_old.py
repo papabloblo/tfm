@@ -5,6 +5,22 @@ import time
 
 class Neighborhood:
 
+    def tiebreaker(self, new_collection):
+
+        #w = [r.diff_waste_collected() for r in new_collection]
+
+        #new_collection = [r for i, r in enumerate(new_collection) if w[i] == max(w)]
+
+        if len(new_collection) > 1:
+
+             t = [sum(r.time_h()) for r in new_collection]
+
+             new_collection = [r for r in new_collection if sum(r.time_h()) == min(t)]
+
+        new_collection = random.choice(new_collection)
+
+        return new_collection
+
     def points_h_available(self, new_collection=None):
         if new_collection is None:
             new_collection = self.collection
@@ -14,7 +30,8 @@ class Neighborhood:
         for p in n.pickup_points:
             h_aux = set(new_collection.h_without_point(p))
             if p in tabu.keys():
-                h_aux = h_aux.difference(set(tabu[p]))
+                continue
+                #h_aux = h_aux.difference(set(tabu[p]))
             h_aux = list(h_aux)
             h_aux.sort()
             if len(h_aux) > 0:
@@ -31,7 +48,8 @@ class Neighborhood:
         for p in self.pickup_points:
             h_aux = set(new_collection.point_h_available(p))
             if p in tabu.keys():
-                h_aux = h_aux.difference(set(tabu[p]))
+                continue
+                #h_aux = h_aux.difference(set(tabu[p]))
             h_aux = list(h_aux)
             h_aux.sort()
             if len(h_aux) > 0:
@@ -114,6 +132,7 @@ class Neighborhood:
         return new_route
 
     def random_swap_point(self):
+        new_routes = []
         new_route = self.collection.copy()
         h = list(range(self.horizon))
         h1 = random.choice(h)
@@ -122,7 +141,6 @@ class Neighborhood:
         routes = new_route.routes()
         pos1 = random.choice(range(len(routes[h1])))
         pos2 = random.choice(range(len(routes[h2])))
-        new_route = new_collection.copy()
         new_route.swap_point(h1, h2, pos1, pos2)
         new_routes.append(new_route)
         return new_route
@@ -152,7 +170,6 @@ class Neighborhood:
                             continue
                         if routes[h1][pos1] in self.tabu_list() or routes[h2][pos2] in self.tabu_list():
                             continue
-                        #print("h1:", h1, "pos1:", pos1, "h2:", h2, "pos2", pos2, "Tiempo:", time.time()-ini_time)
                         new_route = new_collection.copy()
                         new_route.swap_point(h1, h2, pos1, pos2)
                         new_routes.append(new_route)
@@ -269,48 +286,72 @@ class TabuSearch(Neighborhood):
 
 class VNS(Neighborhood):
     def __init__(self, horizon, collection):
-        self.size = 100
+        self.size = 50
         self.collection = collection
         self.horizon = horizon
         self.pickup_points = collection.waste_collection.pickup_points
         self._tabu_list = self.initialize_tabu_list()
-        self.random_size = 50
+        self.random_size = 500
         self.iter = 0
 
-    def initialize_tabu_list(self):
-        # h = dict.fromkeys(range(7), None)
+    def initialize_tabu_list_old(self):
         # return {p: {h: random.choice(range(0, self.size + 1)) for h in range(self.horizon)} for p in self.pickup_points}
         h = {h: None for h in range(self.horizon)}
         # h = {0:self.size + 1, 1: 0, 2: 0, 3:0, 4:0, 5:0, 6: self.size+1}
         return {p: h.copy() for p in self.pickup_points}
 
+    def initialize_tabu_list(self):
+        return {}
+
     def update_tabu_list(self, prev_route, new_route):
 
         for h, r in enumerate(new_route):
-            for p in self.pickup_points:
-                if p in r and p not in prev_route[h]:
-                    self._tabu_list[p][h] = 0
-                elif self._tabu_list[p][h] is not None:
-                    self._tabu_list[p][h] += 1
+            for p in r:
+                if p in [r[0], r[-1]]:
+                    continue
 
-    def tabu_list_old(self):
-        tabu_list = {}
-        for p, h in self._tabu_list.items():
-            tabu_list[p] = [h2 for h2, tabu in h.items() if tabu is not None and tabu < self.size]
-            if len(tabu_list[p]) == 0:
-                del tabu_list[p]
-        return tabu_list
+                if p in self._tabu_list.keys():
+                    self._tabu_list[p] += 1
+                    if self._tabu_list[p] > self.size:
+                        del self._tabu_list[p]
+                else:
+                    if p not in prev_route[h]:
+                        self._tabu_list[p] = 0
+
 
     def tabu_list(self):
-        tabu_list = {}
-        for p, h in self._tabu_list.items():
-            tabu_list[p] = [h2 for h2, tabu in h.items() if tabu is not None and tabu < self.size]
-            if len(tabu_list[p]) == 0:
-                del tabu_list[p]
-            else:
-                tabu_list[p] = range(self.horizon)
+        return self._tabu_list
 
-        return tabu_list
+    #
+    #
+    # def tabu_list_old(self):
+    #     tabu_list = {}
+    #     for p, h in self._tabu_list.items():
+    #         tabu_list[p] = [h2 for h2, tabu in h.items() if tabu is not None and tabu < self.size]
+    #         if len(tabu_list[p]) == 0:
+    #             del tabu_list[p]
+    #     return tabu_list
+    #
+    # def tabu_list2(self):
+    #     tabu_list = {}
+    #     for p, h in self._tabu_list.items():
+    #         tabu_list[p] = [h2 for h2, tabu in h.items() if tabu is not None and tabu < self.size]
+    #         if len(tabu_list[p]) == 0:
+    #             del tabu_list[p]
+    #         else:
+    #             tabu_list[p] = range(self.horizon)
+    #
+    #     return tabu_list
+    #
+    # def tabu_list(self, new_collection):
+    #     h = [h for h, t in enumerate(new_collection.time_h()) if t < self.collection.max_time-100]
+    #     if len(h) > 0:
+    #         h = max(h)
+    #         tabu_list = {p: range(h) for p in self._tabu_list.keys()}
+    #     else:
+    #         tabu_list = {}
+    #
+    #     return tabu_list
 
     def random_neighbor(self, k):
         if k == 0:
@@ -365,17 +406,11 @@ class VNS(Neighborhood):
 
             new_collection = n.neighborhood(current_collection, k)
 
-            w = [r.waste_collected() for r in new_collection]
-            if len(w) == 0:
+            if len(new_collection) == 0:
                 k += 1
                 continue
 
-            w = max(w)
-            new_collection = [r for r in new_collection if r.waste_collected() == w]
-            t = [sum(r.time_h()) for r in new_collection]
-
-            new_collection = [r for r in new_collection if sum(r.time_h()) == min(t)]
-            new_collection = random.choice(new_collection)
+            new_collection = self.tiebreaker(new_collection)
 
             neigh_change = n.neighborhood_change(current_collection, new_collection, k)
             n.update_tabu_list(current_collection.routes(), neigh_change['new_route'].routes())
@@ -400,7 +435,10 @@ class VNS(Neighborhood):
             print('Iteración', t)
             k = 0
             while k < k_max:
-                x = n.random_neighbor(k)
+                if self.iter > 0:
+                    x = n.random_neighbor(k)
+                else:
+                    x = n.collection
                 x2 = n.VND(x, k_max=l_max)
                 neigh_change = self.neighborhood_change(x, x2, k)
                 if self.collection.time_constraint(neigh_change['new_route']) :
@@ -432,10 +470,10 @@ collection = RouteCollection(waste_collection,
                              horizon=7
                              )
 
-s = TabuSearch(7, collection=collection)
+#s = TabuSearch(7, collection=collection)
 n = VNS(7, collection=collection)
 
-n.GVNS(3,4,20)
+n.GVNS(3,4,5)
 
 
 h = 0
@@ -578,7 +616,7 @@ a.collection.add_point_waste_collected(2045)
 a.waste_add()
 a.add_best_neighbors()
 
-a.random_add_point().routes()
+collection = n.random_add_point()
 a.random_change_point().routes()
 
 class NeighborhoodAdd:

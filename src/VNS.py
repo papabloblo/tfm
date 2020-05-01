@@ -1,121 +1,98 @@
-import random as random
+
 class VNS:
-    def __init__(self):
+    def __init__(self, collection):
+        self.collection = collection
+        self.neighborhood = Neighborhood(self.collection)
+
+        self.size = 50
+        self.random_size = 500
         self.iter = 0
-    def shake(self, k=1):
-        points = self.vnd(k)
-        intento = True
-        while intento:
-            add = random.choice([True, False])
-            h = random.choice(range(7))
-            position = random.choice(range(1, len(self.Solution.route[h]['route'])-1))
-            points = [p for p in points if p not in self.Solution.extract_routes(self.Solution.route)[h]]
-            point = random.choice(points)
-            try:
-                if add:
-                    new_route = self.Solution.add_point(h, point, position)
-                else:
-                    new_route = self.Solution.swap_point(h, point, position)
-                intento=False
-            except:
-                0
-        return new_route
 
-    def solution(self, sol):
-        self.Solution = sol
-        self.tabu_points = dict.fromkeys(self.Solution.pickup_points, 0)
+    def random_neighbor(self, k):
+        if k == 0:
+            return self.neighborhood.random_swap_point()
+        elif k == 1:
+            return self.neighborhood.random_add_point()
+        elif k == 2:
+            return self.neighborhood.random_change_point()
+        elif k == 3:
+            return self.neighborhood.random_remove()
+        else:
+            raise Exception('Invalid k', k)
 
-    def update_candidates(self):
-        points = self.Solution.extract_routes(self.Solution.route)
-        points = list(chain(*points, []))
-        points = [p for p in points if p not in [self.Solution.orig, self.Solution.dest]]
-        tabu_points = dict.fromkeys(self.Solution.pickup_points, 0)
-        for p in points:
-            tabu_points[p] += 1
-        self.tabu_points = tabu_points
+    def neighborhood_change(self, current_collection, new_collection, k):
+        if new_collection.waste_collected() > current_collection.waste_collected():
+            return {'new_route': new_collection, 'k': 0}
+        else:
+            return {'new_route': current_collection, 'k': k + 1}
 
-    def vnd(self, k):
-        tabu2 = self.tabu_points.values()
-        tabu2 = list(set(tabu2))
-        tabu2.sort()
-        tabu2 = tabu2[:k]
-        tabu3 = {p: i for p, i in self.tabu_points.items() if i in tabu2}
-        tabu3 = list(tabu3.keys())
-        return tabu3
+    def neighborhood_k(self, current_collection, k):
+        ini_neigh = time.time()
+        self.iter += 1
+        print(self.iter)
+        if k == 0:
+            print("Add")
+            new = self.neighborhood.add_best_neighbors(current_collection)
+        elif k == 1:
+            print("Swap")
+            new = self.neighborhood.swap_best_neighbors(current_collection)
+        elif k == 2:
+            print("Change")
+            new = self.neighborhood.change_best_neighbors(current_collection)
+        elif k == 3:
+            print("Remove")
+            new = self.neighborhood.remove_best_neighbors(current_collection)
+        else:
+            raise Exception('Invalid k', k)
 
-    def gvns(self, k_max = 6, l_max=4, h=[6]):
+        print("Fin en", (time.time() - ini_neigh), "(", round((time.time() - ini_neigh) / 60, 2), "minutos", ")")
+        return new
+
+    def VND(self, current_collection, k_max):
         k = 0
-        ok = False
-        while ok is False and k < k_max:
-            k += 1
-            print("k:", k)
-            x = self.shake(k)
-            l = 0
-            ok2 = False
-            while ok2 is False and l < l_max:
-                l += 1
-                print("l:", l)
-                neighbors = self.Solution.neighboorhood2(points=[self.vnd(l)]*7,
-                                                        route = x,
-                                                         n_indexes=100,
-                                                         n_points=None,
-                                                         indexes=None,
-                                                         h=h,
+        while k < k_max:
 
-                                                         # n_points = i
-                                                         )
-                new_sol = self.Solution.best_neighbor(neighbors, k=1, vecino_bueno=True)
-                if len(new_sol) > 0:
-                    ok2 = True
-                    new_sol = new_sol[0]
-            if len(new_sol) > 0:
-                ok = True
-            else:
-                new_sol = self.Solution.route
-                print("¡No conseguido!")
+            new_collection = self.neighborhood_k(current_collection, k)
 
-        return new_sol
+            neigh_change = self.neighborhood_change(current_collection, new_collection, k)
 
-    def optimize(self, n_iter=10, n_indexes=10, n_points=10, indexes=None, print_each=10, h=[6]):
-        max_iter = self.iter + n_iter
-        for i in range(n_iter):
+            current_collection = neigh_change['new_route']
+            k = neigh_change['k']
 
-            self.iter += 1
+            print("Tiempo:", round((time.time() - self.ini_time)/60, 2), "minutos")
+            self.print(current_collection)
+            print()
 
-            start = time.time()
-
-            new_sol = self.gvns(h=h)
-            self.update_candidates()
-            self.Solution.route = new_sol
-            if i%print_each == 0:
-                print("Iteración", self.iter, "de", max_iter)
-                print(self.tabu_points)
+        return current_collection
 
 
-                print("Tiempo medio:", round(self.Solution.total_time()/len(self.Solution.route),2))
-                print("Recogida total:", round(self.Solution.total_collect(), 2))
-                print("Puntos de recogida", [len(r['route']) for r in self.Solution.route])
+    def GVNS(self, l_max, k_max, t_max):
+        self.ini_time = time.time()
+        t = 0
+        while t < t_max:
+            print('Iteración', t)
+            k = 0
+            while k < k_max:
+                if self.iter > 0:
+                    x = self.random_neighbor(k)
+                else:
+                    x = self.collection
+                x2 = self.VND(x, k_max=l_max)
+                neigh_change = self.neighborhood_change(x, x2, k)
+                if self.collection.time_constraint(neigh_change['new_route']) :
+                    self.collection = neigh_change['new_route']
+                k = neigh_change['k']
+                print(self.collection.waste_collected())
+            t += 1
+        return t
 
-                print("\n")
+    def print(self, current_collection):
+        max_mierda = sum([i * 7 for i in self.collection.waste_collection.fill_rate.values()])
+        print('Mierda recogida', round(current_collection.waste_collected(), 2), "(",
+              round(current_collection.waste_collected() / max_mierda * 100, 2), "%)")
 
-vns = VNS()
-vns.solution(mi)
-vns.optimize(print_each=1, n_iter = 5, h=list(
-                                                             np.random.choice(range(0, 7),
-                                                                              size=random.choice(range(1, 8)),
-                                                                              replace=False
-                                                                              )
-                                                         ))
+        tiempo = [round(ti / 3600, 2) for ti in current_collection.time_h()]
+        long = [len(r) for r in current_collection.routes()]
+        for h in range(self.collection.horizon):
+            print("Día", str(h) + ":", long[h], "puntos en", tiempo[h], "horas")
 
-vns.optimize(print_each=1, n_iter = 5, h=[6])
-vns.gvns()
-vns.shake()
-vns.tabu_points
-vns.update_candidates()
-len(vns.vnd(1))
-len(vns.vnd(2))
-len(vns.vnd(3))
-len(vns.vnd(4))
-len(vns.vnd(5))
-len(vns.vnd(6))
-len(vns.vnd(7))
