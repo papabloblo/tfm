@@ -20,7 +20,7 @@ class Neighborhood:
         :return: dictionary with points and h available
         """
         if new_collection is None:
-            new_collection = self.collection
+            new_collection = self.collection.copy()
 
         pickup_points = self.collection.waste_collection.pickup_points
         h_p = {}
@@ -59,10 +59,10 @@ class Neighborhood:
 
     def waste_add(self, new_collection=None):
         if new_collection is None:
-            new_collection = self.collection
+            new_collection = self.collection.copy()
 
         #points_h_available = self.points_h_available(new_collection)
-        points_h_available = self.points_add_h_available(new_collection)
+        points_h_available = self.points_h_available(new_collection)
         waste = {'point': [], 'h': [], 'waste': []}
         for p, h in points_h_available.items():
 
@@ -78,45 +78,47 @@ class Neighborhood:
 
     def add_best_neighbors(self, new_collection=None, random_choice=False):
         if new_collection is None:
-            new_collection = self.collection
-
-        w = self.waste_add(new_collection)
-        routes = new_collection.routes()
-        #print(self.tabu_list)
-        new_routes = []
-        for waste in w['waste'].unique():
-            w_aux = w[w['waste'] == waste]
-            #print(w_aux)
-            if random_choice:
-                rows = [random.choice(w_aux.index)]
-            else:
-                rows = w_aux.index
-
-            for i in rows:
-
-                point = w.iloc[i, 0]
-                h = w.iloc[i, 1]
-
-                new_routes2 = []
-                for pos in range(len(routes[h]) - 1):
-                    new_route = new_collection.copy()
-                    new_route.add_point(point, h, pos)
-
-                    new_routes2.append(new_route)
-
-                new_routes2 = self.filter_routes_time_constraint(new_routes2)
-                if len(new_routes2) == 0:
-                    if point in self.tabu_list:
-                        self.tabu_list[point].append(h)
-                    else:
-                        self.tabu_list[point] = [h]
+            new_collection = self.collection.copy()
+        if new_collection.time_constraint():
+            w = self.waste_add(new_collection)
+            routes = new_collection.routes()
+            #print(self.tabu_list)
+            new_routes = []
+            for waste in w['waste'].unique():
+                w_aux = w[w['waste'] == waste]
+                #print(w_aux)
+                if random_choice:
+                    rows = [random.choice(w_aux.index)]
                 else:
-                    new_routes += new_routes2
+                    rows = w_aux.index
+
+                for i in rows:
+
+                    point = w.iloc[i, 0]
+                    h = w.iloc[i, 1]
+
+                    new_routes2 = []
+                    for pos in range(len(routes[h]) - 1):
+                        new_route = new_collection.copy()
+                        new_route.add_point(point, h, pos)
+
+                        new_routes2.append(new_route)
+
+                    new_routes2 = self.filter_routes_time_constraint(new_routes2)
+                    if len(new_routes2) == 0:
+                        if point in self.tabu_list:
+                            self.tabu_list[point].append(h)
+                        else:
+                            self.tabu_list[point] = [h]
+                    else:
+                        new_routes += new_routes2
 
 
-            new_routes = self.filter_routes_time_constraint(new_routes)
-            if len(new_routes) > 0:
-                break
+                new_routes = self.filter_routes_time_constraint(new_routes)
+                if len(new_routes) > 0:
+                    break
+        else:
+            new_routes = [new_collection]
 
         return self.tiebreaker(new_routes)
 
@@ -136,16 +138,27 @@ class Neighborhood:
 
     def swap_best_neighbors(self, new_collection=None):
         if new_collection is None:
-            new_collection = self.collection
-        self.tabu_list = {}
+            new_collection = self.collection.copy()
+        #self.tabu_list = {}
         candidate = new_collection.copy()
-        for h1 in range(candidate.horizon):
+        if not candidate.time_constraint():
+            H1 = [h for h in range(candidate.horizon) if candidate.time_h()[h] > candidate.max_time]
+        else:
+            H1 = list(range(candidate.horizon))
+        H2 = list(range(candidate.horizon))
+        while len(H1) > 0:
+            h1 = H1.pop()
+
+            H2.remove(h1)
             r1 = candidate.routes()[h1]
             for pos1 in range(1, len(r1)-1):
                 p1 = r1[pos1]
                 if self.tabu_p_h(p1, h1):
                     continue
-                for h2 in range(h1+1, candidate.horizon):
+                for h2 in H2:
+
+                #for h2 in range(h1+1, candidate.horizon):
+
                     r2 = candidate.routes()[h2]
                     for pos2 in range(1, len(r2) - 1):
                         p2 = r2[pos2]
@@ -157,8 +170,16 @@ class Neighborhood:
                         if new.time_constraint():
                             if new.waste_collected() > candidate.waste_collected():
                                 candidate = new
+                                for p in self.tabu_list.keys():
+                                    self.tabu_list[p] = [h for h in self.tabu_list[p] if h not in [h1, h2]]
                             elif new.waste_collected() == candidate.waste_collected() and new.total_time() < candidate.total_time():
                                 candidate = new
+                                for p in self.tabu_list.keys():
+                                    self.tabu_list[p] = [h for h in self.tabu_list[p] if h not in [h1, h2]]
+
+            #if candidate.waste_collected() > new_collection.waste_collected():
+            #    break
+
         return candidate
 
     def random_swap_point(self):
@@ -179,7 +200,7 @@ class Neighborhood:
 
     def change_best_neighbors(self, new_collection=None):
         if new_collection is None:
-            new_collection = self.collection
+            new_collection = self.collection.copy()
         candidate = new_collection.copy()
         for h in range(candidate.horizon):
             if len(candidate.routes()[h]) == 2:
@@ -216,7 +237,7 @@ class Neighborhood:
 
     def remove_best_neighbors(self, new_collection=None):
         if new_collection is None:
-            new_collection = self.collection
+            new_collection = self.collection.copy()
 
         candidate = new_collection.copy()
 
@@ -255,10 +276,12 @@ class Neighborhood:
     def tiebreaker(self, new_collection):
 
         if len(new_collection) > 1:
+            w = [r.diff_waste_collected() for r in new_collection]
+            new_collection = [r for i, r in enumerate(new_collection) if w[i] == max(w)]
 
-             t = [sum(r.time_h()) for r in new_collection]
+            t = [sum(r.time_h()) for r in new_collection]
 
-             new_collection = [r for r in new_collection if sum(r.time_h()) == min(t)]
+            new_collection = [r for r in new_collection if sum(r.time_h()) == min(t)]
 
         new_collection = random.choice(new_collection)
 

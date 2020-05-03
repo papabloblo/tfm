@@ -21,49 +21,49 @@ class VNS:
             raise Exception('Invalid k', k)
 
     def neighborhood_change(self, current_collection, new_collection, k):
-        if new_collection.waste_collected() > current_collection.waste_collected():
-            return {'new_route': new_collection, 'k': 0}
-        else:
+        if new_collection.waste_collected() < current_collection.waste_collected():
             return {'new_route': current_collection, 'k': k + 1}
+        elif new_collection.waste_collected() - current_collection.waste_collected() < 0.05:
+            return {'new_route': new_collection, 'k': k + 1}
+        else:
+            return {'new_route': new_collection, 'k': 0}
 
-    def neighborhood_k(self, current_collection, k):
+
+    def neighborhood_k(self, k):
         ini_neigh = time.time()
         self.iter += 1
         print(self.iter)
         if k == 0:
             print("Add")
-            new = self.neighborhood.add_best_neighbors(current_collection)
+            new = self.neighborhood.add_best_neighbors()
         elif k == 1:
             print("Swap")
-            new = self.neighborhood.swap_best_neighbors(current_collection)
+            new = self.neighborhood.swap_best_neighbors()
         elif k == 2:
             print("Change")
-            new = self.neighborhood.change_best_neighbors(current_collection)
+            new = self.neighborhood.change_best_neighbors()
         elif k == 3:
             print("Remove")
-            new = self.neighborhood.remove_best_neighbors(current_collection)
+            new = self.neighborhood.remove_best_neighbors()
         else:
             raise Exception('Invalid k', k)
-
-        print("Fin en", (time.time() - ini_neigh), "(", round((time.time() - ini_neigh) / 60, 2), "minutos", ")")
+        duration = time.time() - ini_neigh
+        print("Fin en", round(duration, 2), "(", round(duration/60, 2), "minutos", ")")
         return new
 
-    def VND(self, current_collection, k_max):
+    def VND(self, k_max):
         k = 0
         while k < k_max:
 
-            new_collection = self.neighborhood_k(current_collection, k)
-
-            neigh_change = self.neighborhood_change(current_collection, new_collection, k)
-
-            current_collection = neigh_change['new_route']
+            new_collection = self.neighborhood_k(k)
+            neigh_change = self.neighborhood_change(self.collection, new_collection, k)
+            self.collection = neigh_change['new_route']
+            self.neighborhood.collection = neigh_change['new_route']
             k = neigh_change['k']
 
             print("Tiempo:", round((time.time() - self.ini_time)/60, 2), "minutos")
-            self.print(current_collection)
+            self.print(self.collection)
             print()
-
-        return current_collection
 
 
     def GVNS(self, l_max, k_max, t_max):
@@ -75,12 +75,16 @@ class VNS:
             while k < k_max:
                 if self.iter > 0:
                     x = self.random_neighbor(k)
+                    x_orig = self.collection
+                    self.collection = x.copy()
+                    self.neighborhood.collection = self.collection
                 else:
-                    x = self.collection
-                x2 = self.VND(x, k_max=l_max)
-                neigh_change = self.neighborhood_change(x, x2, k)
-                if self.collection.time_constraint(neigh_change['new_route']) :
+                    x_orig = self.collection.copy()
+                self.VND(k_max=l_max)
+                neigh_change = self.neighborhood_change(x_orig, self.collection, k)
+                if self.collection.time_constraint():
                     self.collection = neigh_change['new_route']
+                    self.neighborhood.collection = neigh_change['new_route']
                 k = neigh_change['k']
                 print(self.collection.waste_collected())
             t += 1
