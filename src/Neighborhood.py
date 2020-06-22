@@ -1,6 +1,8 @@
 import pandas as pd
 import random
 import time
+from Tabu import Tabu
+
 class Neighborhood(Tabu):
     def __init__(self, collection, best_collection):
         super().__init__()
@@ -323,13 +325,15 @@ class Neighborhood(Tabu):
                                 candidate = new.copy()
                                 w = new.waste_collected()
                                 total_time = candidate.total_time()
-                                self.delete_h([h])
+                                self.add_tabu({p: list(range(new.horizon))})
+                                #self.delete_h([h])
 
                             elif new.waste_collected() == w and new.total_time() < total_time:
                                 candidate = new.copy()
                                 w = new.waste_collected()
                                 total_time = candidate.total_time()
-                                self.delete_h([h])
+                                self.add_tabu({p: list(range(new.horizon))})
+                                #self.delete_h([h])
 
         return candidate
 
@@ -437,3 +441,18 @@ class Neighborhood(Tabu):
         return new
 
 
+class NeighborhoodAdd:
+    def random(self, route):
+
+        points_h_available = self.points_h_available()
+        new_route = self.collection.copy()
+
+        random_point = random.choice(list(points_h_available.keys()))
+        random_h = random.choice(points_h_available[random_point])
+
+        route = self.collection.routes()[random_h]
+        position = random.choice(range(len(route) - 1))
+
+        new_route.add_point(random_point, random_h, position)
+
+        return new_route

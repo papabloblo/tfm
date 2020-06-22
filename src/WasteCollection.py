@@ -1,8 +1,9 @@
 import csv
 import math
+import random
 
 class WasteCollection:
-    def __init__(self, file_filling_rates, file_times, ini_points=None):
+    def __init__(self, file_filling_rates, file_times, ini_points=None, random_fill_ini=True):
         if ini_points is None:
             self.ini_points = [0, 5, 15]
         else:
@@ -11,7 +12,10 @@ class WasteCollection:
         self.fill_rate = self.read_filling_rates(file_filling_rates)
         self.times = self.read_times(file_times)
         self.pickup_points = self.extract_pickup_points()
-        self.fill_ini = self.fill_rate
+        if random_fill_ini:
+            self.fill_ini = self.random_ini_fill()
+        else:
+            self.fill_ini = self.fill_rate
 
     def read_times(self, file_times):
         times = {}
@@ -76,4 +80,11 @@ class WasteCollection:
         times = self.times[point_orig]
         times = [t for p, t in times.items() if p in points_dest]
         return min(times)
+
+    def random_ini_fill(self):
+        aux = {p: random.random() for p in self.fill_rate.keys()}
+        for p in self.ini_points:
+            aux[p] = 0
+        return aux
+
 

@@ -1,4 +1,4 @@
-from src.sucio import waste_collection
+from src.old.sucio import waste_collection
 from itertools import chain
 import random as random
 import time
