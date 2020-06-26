@@ -1,5 +1,7 @@
 from itertools import chain
 import pandas as pd
+#~from Neighborhood2 import NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange
+#from Tabu import Tabu
 
 class Route:
     def __init__(self, waste_collection, orig, dest, route=None):
@@ -110,7 +112,8 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
                  routes=None,
                  max_time=6.5*60*60,
                  waste_add=None,
-                 time_add=None):
+                 time_add=None,
+                 max_tabu=50):
 
         self.waste_collection = waste_collection
         self.horizon = horizon
@@ -119,6 +122,10 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
         self.collection = self.create(routes)
         self.waste_collected_point = self.calculate_waste_collected_point()
         self.max_time = max_time
+        self.tabu = Tabu(collection_points=self.waste_collection.pickup_points,
+                         horizon=self.horizon,
+                         route=self.routes(),
+                         max_tabu=max_tabu)
         if waste_add is None:
             self.waste_add = pd.DataFrame({'point': [], 'h': [], 'waste': []})
             self.update_waste_add()
@@ -134,7 +141,7 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
         else:
             self.time_add = time_add
 
-        while self.time_add.empty:
+        while self.time_add.empty and not self.waste_add.empty:
             self.waste_add = self.waste_add[self.waste_add['waste'] != max(self.waste_add['waste'])]
             self.update_time_add()
 
@@ -169,7 +176,7 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
         return [r.route() for r in self.collection]
 
     def copy(self):
-        return RouteCollection(waste_collection=self.waste_collection,
+        route = RouteCollection(waste_collection=self.waste_collection,
                                orig=self.orig,
                                dest=self.dest,
                                horizon=self.horizon,
@@ -177,6 +184,8 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
                                waste_add=self.waste_add,
                                time_add=self.time_add
                                )
+        route.tabu.tabu_list = self.tabu.tabu_list.copy()
+        return route
 
     def add_point(self, point, h, position):
         self.collection[h].add_point(point, position)
@@ -351,7 +360,7 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
         h_p = {}
         for p in pickup_points:
             h_p[p] = self.h_without_point(p)
-
+            h_p[p] = list(set(h_p[p]).difference(set(self.tabu.tabu_p(p))))
         return h_p
 
     def update_waste_add(self, point=None):
@@ -388,6 +397,7 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
         else:
             self.waste_add = self.waste_add.append(waste)
 
+        self.waste_add = self.waste_add[self.waste_add['waste'] > 0.001]
         self.waste_add.sort_values(by=['waste'], inplace=True, ascending=False)
         self.waste_add = self.waste_add.reset_index(drop=True)
 
@@ -540,5 +550,35 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
                         worst_p = p
                         worst_inc = inc
                 self.remove_point(h, self.routes()[h].index(worst_p))
+
+    def refine(self):
+
+        for h in range(self.horizon):
+            #print(h)
+            ruta0 = self.collection[h]
+
+            ruta_orig = ruta0.route()
+
+            best = ruta_orig.copy()
+            best_time = ruta0.time()
+            #print(best_time)
+
+            mejora = True
+            while mejora:
+                mejora = False
+                ruta_orig = best.copy()
+                for i1 in range(1, len(ruta_orig) - 1):
+                    for i2 in range(i1, len(ruta_orig) - 1):
+                        ruta_aux = ruta_orig.copy()
+                        ruta_aux[i1] = ruta_orig[i2]
+                        ruta_aux[i2] = ruta_orig[i1]
+                        mi = Route(self.waste_collection, self.orig, self.dest, ruta_aux)
+                        if mi.time() < best_time:
+                            mejora = True
+                            #print(mi.time())
+                            best = ruta_aux.copy()
+                            best_time = mi.time()
+            self.update_route(h, best)
+
 
 

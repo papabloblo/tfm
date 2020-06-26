@@ -74,7 +74,7 @@ class VNS:
             print("Total time:", round((time.time() - self.ini_time)/60, 2), "minutes")
             self.print()
             print()
-            #self.log()
+            self.log()
 
     def GVNS(self, l_max, k_max, t_max):
         self.ini_time = time.time()
@@ -91,29 +91,45 @@ class VNS:
             t += 1
         return t
 
-    def print(self):
-        max_waste = sum([self.candidate_collection.waste_collection.fill_rate[p] * self.candidate_collection.horizon + self.candidate_collection.waste_collection.fill_ini[p] for p in self.candidate_collection.waste_collection.fill_rate.keys()])
-        waste_day = self.candidate_collection.mean_waste_h()
+    def print(self, best=False):
+        if best:
+            candidate = self.best_collection
+        else:
+            candidate = self.candidate_collection
+        max_waste = sum([candidate.waste_collection.fill_rate[p] * candidate.horizon + candidate.waste_collection.fill_ini[p] for p in candidate.waste_collection.fill_rate.keys()])
+        waste_day = candidate.mean_waste_h()
         waste_day = [round(x, 3) for x in waste_day]
+        long = [len(r) for r in candidate.routes()]
 
         print()
-        print('Total waste collected', round(self.candidate_collection.waste_collected(), 2), "(",
-              round(self.candidate_collection.waste_collected() / max_waste * 100, 2), "%)")
+        print('Total waste collected', round(candidate.waste_collected(), 2), "(",
+              round(candidate.waste_collected() / max_waste * 100, 2), "%)")
 
-        tiempo = [round(ti / 3600, 2) for ti in self.candidate_collection.time_h()]
-        long = [len(r) for r in self.candidate_collection.routes()]
+        a = {p: candidate.waste_collected_point_h2(p, candidate.point_h2(p)) for p in candidate.unique_points()}
+        mi = []
+        for i in a.values():
+            mi += list(i.values())
+
         print()
-        for h in range(self.candidate_collection.horizon):
+        print('Mean fill level: ', round(sum(mi)*100 / len(mi), 2), "%")
+        print("Containers:", sum(long))
+        print("Containers by day:", sum(long)/len(long))
+        tiempo = [round(ti / 3600, 2) for ti in candidate.time_h()]
+
+        print()
+        for h in range(candidate.horizon):
             print("Day", str(h) + ":", long[h], "pickup points in", tiempo[h], "hours.", "Mean waste: ", waste_day[h])
 
     def log(self):
         x = {
             "iter": self.iter,
-            "waste_collected": self.candidate_collection.waste_collected(),
-            "total_time": time.time() - self.ini_time,
-            "time": 10,
-            "neighborhood": "add",
-            "route": [[int(r2) for r2 in r] for r in self.candidate_collection.routes()]
+            "best_waste": self.best_collection.waste_collected(),
+            "candidate1_waste": self.candidate_collection.waste_collected(),
+            "candidate2_waste": self.candidate_collection.waste_collected(),
+            "best": [[int(r2) for r2 in r] for r in self.best_collection.routes()],
+            "candidate": [[int(r2) for r2 in r] for r in self.candidate_collection.routes()],
+            "candidate2": [[int(r2) for r2 in r] for r in self.candidate_collection2.routes()],
+            "time": time.time() - self.ini_time
         }
         f = open(self.path+"/log.txt", "a")
         f.write(json.dumps(x) + '\n')

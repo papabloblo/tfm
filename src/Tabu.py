@@ -1,39 +1,51 @@
 class Tabu:
-    def __init__(self):
-        self.tabu_list = {}
-        self.max_tabu = 50
 
-    def clean_empty(self):
-        tabu_list2 = self.tabu_list.copy()
+    def __init__(self, collection_points, horizon, route, max_tabu=50):
+        self.max_tabu = max_tabu
+        self.horizon = horizon
+        self.collection_points = collection_points
+        self.tabu_list = self.intialize()
+        self.current_route = route.copy()
+
+    def intialize(self):
+        return {p: [-1]*self.horizon for p in self.collection_points}
+
+    def changes(self, route1, route2):
+        set_current = set(route1)
+        set_new = set(route2)
+        return list(set_new.symmetric_difference(set_current))
+
+    def changes_by_h(self, current_route, new_route):
+        points_changed = dict.fromkeys(range(self.horizon))
+        for h in range(self.horizon):
+            points_changed[h] = self.changes(current_route[h], new_route[h])
+        points_changed = {h: points for h, points in points_changed.items() if len(points) > 0}
+        return points_changed
+
+    def update(self, new_route):
+        changes = self.changes_by_h(self.current_route, new_route)
+
         for p in self.tabu_list.keys():
-            if len(self.tabu_list[p]) == 0:
-                del tabu_list2[p]
-        self.tabu_list = tabu_list2.copy()
-    def add_tabu(self, p_h, ini_tabu=1):
-        for p, h in p_h.items():
-            if p not in self.tabu_list.keys():
-                self.tabu_list[p] = dict.fromkeys(h, ini_tabu)
-            else:
-                for h2 in h:
-                    self.tabu_list[p][h2] = ini_tabu
+            for h, n in enumerate(self.tabu_list[p]):
+                if n != -1:
+                    self.tabu_list[p][h] += 1
 
-    def update_tabu_list(self):
-        for p in self.tabu_list.keys():
-            self.tabu_list[p] = {h: i + 1 for h, i in self.tabu_list[p].items() if i + 1 <= self.max_tabu}
-        self.clean_empty()
+        for h, points in changes.items():
+            for p in points:
+                self.tabu_list[p][h] = 0
+        self.current_route = new_route.copy()
 
-    def delete(self, p_h):
-        for p, h in p_h.items():
-            for h2 in h:
-                del self.tabu_list[p][h2]
-        self.clean_empty()
+    def tabu_by_h(self):
+        tabu = {h: [] for h in range(self.horizon)}
+        for p, H in self.tabu_list.items():
+            for h, n in enumerate(H):
+                if n < self.max_tabu and n >= 0:
+                    tabu[h].append(p)
+        return tabu
 
-    def delete_h(self, h):
-        for p in self.tabu_list.keys():
-            self.tabu_list[p] = {h2: i for h2, i in self.tabu_list[p].items() if h2 not in h}
-        self.clean_empty()
+    def tabu_p(self, point):
+        aux = [h for h, n in enumerate(self.tabu_list[point]) if n < self.max_tabu and n >= 0]
 
-
-    def tabu(self):
-        return {p: list(h.keys()) for p, h in self.tabu_list.items()}
-
+        if len(aux) > 0:
+            aux = list(range(self.horizon))
+        return aux
