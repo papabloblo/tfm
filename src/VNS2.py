@@ -12,7 +12,13 @@ class VNS:
 
         self.neighbor_k = 0
         self.neighbor_random_k = 0
-        self.epsilon = 0.05
+        self.epsilon = 0.01
+
+    def epsilon_change(self):
+        epsilon = 0
+        #epsilon = max(0, (300 - self.iter) / 300)
+        print(epsilon)
+        return(epsilon)
 
     def random_neighbor(self):
         if self.neighbor_random_k == 0:
@@ -28,7 +34,7 @@ class VNS:
 
 
     def update_neighbor_k(self):
-        if self.candidate_collection.waste_collected() <= self.candidate_collection2.waste_collected() + self.epsilon \
+        if self.candidate_collection.waste_collected() <= self.candidate_collection2.waste_collected() + self.epsilon_change() \
                 or not self.candidate_collection.time_constraint():
             if self.candidate_collection.waste_collected() > self.candidate_collection2.waste_collected() \
                     and self.candidate_collection.time_constraint():
@@ -41,12 +47,13 @@ class VNS:
             self.neighbor_k = 0
 
     def update_neighbor_random_k(self):
-        if self.candidate_collection.waste_collected() <= self.best_collection.waste_collected() + self.epsilon \
+        if self.candidate_collection.waste_collected() <= self.best_collection.waste_collected() + self.epsilon_change() \
                 or not self.candidate_collection.time_constraint():
             self.candidate_collection = self.best_collection.copy()
             self.neighbor_random_k += 1
         else:
             self.best_collection = self.candidate_collection.copy()
+            self.best_collection.waste_add = self.candidate_collection.waste_add
             self.neighbor_random_k = 0
 
     def neighborhood_k(self):
@@ -100,10 +107,11 @@ class VNS:
         waste_day = candidate.mean_waste_h()
         waste_day = [round(x, 3) for x in waste_day]
         long = [len(r) for r in candidate.routes()]
-
+        best_waste = self.best_collection.waste_collected()
         print()
         print('Total waste collected', round(candidate.waste_collected(), 2), "(",
               round(candidate.waste_collected() / max_waste * 100, 2), "%)")
+        print('Best waste collected:', round(best_waste, 2))
 
         a = {p: candidate.waste_collected_point_h2(p, candidate.point_h2(p)) for p in candidate.unique_points()}
         mi = []
