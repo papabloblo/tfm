@@ -763,6 +763,21 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
         h_to_fix = [h for h in self.h() if self.time_h()[h] > self.max_time]
         for h in h_to_fix:
             while self.time_h()[h] > self.max_time:
+                time_ini = self.time_aux(self.routes()[h])
+
+                for p in self.routes()[h][1:-1]:
+                    route_aux = self.routes()[h].copy()
+                    route_aux.remove(p)
+                    if self.time_aux(route_aux) < time_ini:
+                        time_ini = self.time_aux(route_aux)
+                        best_p = p
+                self.remove_point(h, self.routes()[h].index(best_p))
+                self.ImprovePath(h)
+
+    def repair_time_constraint_old(self):
+        h_to_fix = [h for h in self.h() if self.time_h()[h] > self.max_time]
+        for h in h_to_fix:
+            while self.time_h()[h] > self.max_time:
                 worst_p = self.routes()[h][1]
                 worst_inc = 100
                 for p in self.routes()[h][1:-1]:

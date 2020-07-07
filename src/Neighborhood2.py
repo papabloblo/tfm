@@ -27,8 +27,11 @@ class NeighborhoodAdd:
     def add_best(self):
         improvement = False
         #self.update_waste_add()
-        while not improvement and not self.waste_add.empty:# and i < 50 :
+        #while not improvement and not self.waste_add.empty:# and i < 50 :
+        while not self.waste_add.empty:  # and i < 50 :
             current_waste = self.waste_add['waste'].max()
+
+            #print(self.waste_collected())
 
             aux = self.waste_add[
                 (self.waste_add['waste'] == self.waste_add['waste'].max()) & (self.waste_add['time'] == -1)]
@@ -90,6 +93,9 @@ class NeighborhoodAdd:
             aux = aux[aux['point'] != point]
             aux = aux[aux['h'] != h]
             #self.update_waste_add(points=[point], h=[h])
+
+            self.update_waste_add(points=[point], h=[h])
+            self.update_waste_swap(h=[h])
 
         if improvement:
             self.tabu.update(self.routes())
@@ -173,42 +179,28 @@ class NeighborhoodSwap:
             current_waste = self.waste_swap['total_waste'].max()
 
             aux = self.waste_swap[
-                (self.waste_swap['total_waste'] == self.waste_swap['total_waste'].max()) & (self.waste_swap['total_time'] == -1)]
+                (self.waste_swap['total_waste'] == current_waste) & (self.waste_swap['total_time'] == -1)]
 
             for ind in aux.index:
 
-                p1 = aux['p1'][ind]
-                h1 = aux['h1'][ind]
-                p2 = aux['p2'][ind]
-                h2 = aux['h2'][ind]
+                p1 = aux.loc[ind, 'p1']
+                h1 = aux.loc[ind, 'h1']
+                p2 = aux.loc[ind, 'p2']
+                h2 = aux.loc[ind, 'h2']
 
-                routes = copy.deepcopy(self.routes())
+                routes = self.routes()
 
                 routes[h1][routes[h1].index(p1)] = p2
                 routes[h2][routes[h2].index(p2)] = p1
 
-                times = self.Improve(routes, h=[h1,h2])
+                times = self.Improve(routes, h=[h1, h2])
 
-
-                #new_route = self.copy()
-
-                #new_route.change_point(p2, h1, new_route.routes()[h1].index(p1))
-                #new_route.change_point(p1, h2, new_route.routes()[h2].index(p2))
-
-                #new_route.ImprovePath(h1)
-                #new_route.ImprovePath(h2)
 
                 if max(times) > self.max_time:
                     self.waste_swap.drop(ind, inplace=True)
                 else:
                     self.waste_swap.loc[ind, 'total_time'] = sum(times)
-                    #self.waste_swap['total_time'][ind] = sum(times)
 
-
-                #if new_route.time_constraint():
-                #    self.waste_swap['total_time'][ind] = new_route.total_time()
-                #else:
-                #    self.waste_swap.drop(ind, inplace=True)
 
             aux = self.waste_swap[(self.waste_swap['total_waste'] == self.waste_swap['total_waste'].max())]
 
@@ -240,13 +232,12 @@ class NeighborhoodSwap:
 
             self.update_waste_swap(h=[h1, h2])
 
-
             i += 1
             improvement = True
             #improvement = True
             print(self.waste_collected() - inc_waste)
-            if self.waste_collected() - inc_waste < 0.01:
-                break
+            #if self.waste_collected() - inc_waste < 0.01:
+            #    break
             print(self.waste_collected())
 
         if improvement:
@@ -290,25 +281,34 @@ class NeighborhoodChange:
 
     def change_best(self):
         self.calculate_waste_change()
-        aux = self.waste_change[self.waste_change['total_waste'] == self.waste_change['total_waste'].max()]
-        aux = aux[aux['total_time'] == aux['total_time'].min()]
 
-        ind = random.choice(aux.index)
+        while not self.waste_change.empty:
+            current_waste = self.waste_collected()
+            print(current_waste)
+            aux = self.waste_change[self.waste_change['total_waste'] == self.waste_change['total_waste'].max()]
+            aux = aux[aux['total_time'] == aux['total_time'].min()]
 
-        p1 = aux['p1'][ind]
-        h = aux['h'][ind]
-        p2 = aux['p2'][ind]
+            ind = random.choice(aux.index)
+
+            if aux['total_waste'][ind] <= current_waste:
+                break
+
+            p1 = aux['p1'][ind]
+            h = aux['h'][ind]
+            p2 = aux['p2'][ind]
 
 
-        self.change_point(p2, h, self.routes()[h].index(p1))
-        self.ImprovePath(h)
-        #self.update_route(h, self.ImprovePath(self.routes()[h], alpha=10))
-        #self.refine()
-        self.tabu.update(self.routes())
+            self.change_point(p2, h, self.routes()[h].index(p1))
+            self.ImprovePath(h)
+            #self.update_route(h, self.ImprovePath(self.routes()[h], alpha=10))
+            #self.refine()
+            self.tabu.update(self.routes())
 
 
-        self.update_waste_add(points=[p1, p2],h=[h])
-        self.update_waste_swap(h=[h])
+            self.update_waste_add(points=[p1, p2],h=[h])
+            self.update_waste_swap(h=[h])
+
+            self.calculate_waste_change()
 
         # points = [p for p, h_aux in self.points_h_available().items() if h not in h_aux]
         #
