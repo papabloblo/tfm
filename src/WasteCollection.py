@@ -3,7 +3,7 @@ import math
 import random
 
 class WasteCollection:
-    def __init__(self, file_filling_rates, file_times, ini_points=None, random_fill_ini=True, collection_time=120):
+    def __init__(self, file_filling_rates, file_times, ini_points=None, random_fill_ini=True, collection_time=90):
         if ini_points is None:
             self.ini_points = [0, 5, 15]
         else:
@@ -13,10 +13,7 @@ class WasteCollection:
         self.fill_rate = self.read_filling_rates(file_filling_rates)
         self.times = self.read_times(file_times)
         self.pickup_points = self.extract_pickup_points()
-        #if random_fill_ini:
-         #   self.fill_ini = self.random_ini_fill()
-        #else:
-        #    self.fill_ini = self.fill_rate
+
 
     def read_times(self, file_times):
         times = {}

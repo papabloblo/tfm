@@ -1,7 +1,5 @@
 from itertools import chain
 import pandas as pd
-#~from Neighborhood2 import NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange
-#from Tabu import Tabu
 
 class Route:
     def __init__(self, waste_collection, orig, dest, route=None):
@@ -106,8 +104,6 @@ class Route:
     def available_add_positions(self):
         return list(range(len(self.__route)-1))
 
-
-
 class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
 
     def __init__(self,
@@ -133,7 +129,6 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
                          route=self.routes(),
                          max_tabu=max_tabu)
         if waste_add is None:
-            #self.waste_add = pd.DataFrame({'point': [], 'h': [], 'waste': [], 'time': []})
             self.waste_add = self.calculate_waste_add2()
         else:
             self.waste_add = waste_add
@@ -142,6 +137,7 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
         else:
             self.waste_swap = waste_swap
 
+        self.calculate_waste_change(first_time=True)
 
     def h(self):
         return list(range(self.horizon))
@@ -300,7 +296,6 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
 
         waste_collected[point] = self.waste_collected_point_h(point, h)
 
-        #return self.waste_collected(waste_collected)
         if point in self.waste_collected_point:
             w = waste_collected[point] - self.waste_collected_point[point]
         else:
@@ -403,9 +398,6 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
 
         return (waste)
 
-
-
-
     def update_waste_add(self, points=None, h=None):
         if h is not None:
             for h_aux in h:
@@ -413,124 +405,16 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
 
                 self.waste_add = self.waste_add.append(self.calculate_waste_add2(h=h_aux))
 
-        #points2 = [p for p, h2 in self.points_h_available().items() if h not in h2]
-
-        #points = points + points2
         if points is not None:
             for p in points:
                 self.waste_add = self.waste_add[self.waste_add['point'] != p]
                 self.waste_add = self.waste_add.append(self.calculate_waste_add2(p))
 
-
-        #self.waste_add.loc[self.waste_add['h'] == h, 'time'] = -1
-
-
-
         self.waste_add = self.waste_add[self.waste_add['waste'] >= 0]
         self.waste_add.sort_values(by=['waste'], inplace=True, ascending=False)
         self.waste_add = self.waste_add.reset_index(drop=True)
-
-
-
-
-    def update_waste_add_old(self, point=None, h=None):
-
-        points_h_available = self.points_h_available()
-
-        if point is not None:
-            self.waste_add = self.waste_add[self.waste_add['point'] != point]
-
-        #else:
-         #   self.waste_add = pd.DataFrame({'point': [], 'h': [], 'waste': []})
-
-
-        if h is not None:
-            self.waste_add = self.waste_add[self.waste_add['h'] != h]
-            for p, h2 in points_h_available.items():
-                if p == point:
-                    continue
-                elif h in h2:
-                    points_h_available[p] = [h]
-
-
-        waste = {'point': [], 'h': [], 'waste': []}
-        for p, h2 in points_h_available.items():
-            for h_aux in h2:
-                    waste['point'].append(p)
-                    waste['h'].append(h_aux)
-                    new_h = self.h_with_point(p) + [h_aux]
-
-                    inc_waste = self.waste_collected_point_h(p, new_h) - \
-                                self.waste_collected_point_h(p, self.h_with_point(p))
-
-                    waste['waste'].append(inc_waste)
-
-        waste = pd.DataFrame(waste)
-
-        waste['point'] = waste['point'].astype('int')
-        waste['h'] = waste['h'].astype('int')
-
-        if self.waste_add.empty:
-            self.waste_add = waste
-        else:
-            self.waste_add = self.waste_add.append(waste)
-
-        self.waste_add = self.waste_add[self.waste_add['waste'] >= 0]
-        self.waste_add.sort_values(by=['waste'], inplace=True, ascending=False)
-        self.waste_add = self.waste_add.reset_index(drop=True)
-
-    def update_time_add(self, h=None):
-
-        self.time_add = self.time_add.drop(columns=['total_waste'])
-        self.time_add = self.time_add[self.time_add['h'] != h]
-        best_w = self.waste_add['waste'].max()
-        waste_aux = self.waste_add[self.waste_add['waste'] == best_w]
-
-        if h is not None:
-            waste_aux = waste_aux[waste_aux['h'] == h]
-            self.time_add = self.time_add[self.time_add['h'] != h]
-        else:
-            self.time_add = pd.DataFrame({'point': [], 'h': [], 'pos': [], 'total_time': []})
-            self.time_add['point'] = self.time_add['point'].astype('int')
-            self.time_add['h'] = self.time_add['h'].astype('int')
-            self.time_add['pos'] = self.time_add['pos'].astype('int')
-
-        aux = {'point': [], 'h': [], 'pos': [], 'total_time': []}
-
-        for i in waste_aux.index:
-            point_aux = waste_aux['point'][i]
-            h_aux = waste_aux['h'][i]
-            for pos in self.available_add_positions(h_aux):
-
-                if self.time_add[(self.time_add['point'] == point_aux) & (self.time_add['h'] == h_aux) & (self.time_add['pos'] == pos)].empty:
-
-                    new_time = self.collection[h_aux].add_time(point_aux, pos)
-                    aux['point'].append(point_aux)
-                    aux['h'].append(h_aux)
-                    aux['pos'].append(pos)
-                    max_time = self.time_h().copy()
-                    max_time[h_aux] = new_time['new_time']
-                    aux['total_time'].append(max(max_time))
-
-
-        aux = pd.DataFrame(aux)
-
-        aux['point'] = aux['point'].astype('int')
-        aux['h'] = aux['h'].astype('int')
-        aux['pos'] = aux['pos'].astype('int')
-
-        self.time_add = self.time_add.append(aux)
-        self.time_add = self.time_add[self.time_add['total_time'] <= self.max_time]
-
-        self.time_add['total_waste'] = best_w
-
-        self.time_add.sort_values(by=['total_time'], inplace=True)
-        self.time_add = self.time_add.reset_index(drop=True)
-
 
     def calculate_waste_swap(self, h1, h2, p1, p2):
-
-        #new_route = self.copy()
 
         total_waste = self.waste_collected()
 
@@ -548,54 +432,7 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
         total_waste += self.waste_collected_point_h(p1, new_h_p1)
         total_waste += self.waste_collected_point_h(p2, new_h_p2)
 
-        #new_route.change_point(p2, h1, new_route.routes()[h1].index(p1))
-        #new_route.change_point(p1, h2, new_route.routes()[h2].index(p2))
-
         return total_waste
-        #return new_route.waste_collected()
-
-    def update_waste_swap_old(self, h=None, first_time=False):
-
-        if h is None:
-            h = range(self.horizon)
-
-        aux = {'p1': [], 'p2': [], 'h1': [], 'h2': [], 'total_waste': [], 'total_time': []}
-
-        visited_h = []
-
-        for i, h1 in enumerate(h[:-1]):
-            for h2 in h[i + 1:]:
-                for p1 in self.routes()[h1]:
-                    for p2 in self.routes()[h2]:
-                        if p1 in self.routes()[h2] or p2 in self.routes()[h1]:
-                            continue
-                        if len(self.routes()[h1]) == 2 or len(self.routes()[h2]) == 2:
-                            continue
-
-                        aux['p1'].append(p1)
-                        aux['p2'].append(p2)
-                        aux['h1'].append(h1)
-                        aux['h2'].append(h2)
-
-                        aux['total_waste'].append(self.calculate_waste_swap(h1, h2, p1, p2))
-                        aux['total_time'].append(-1)
-
-        aux = pd.DataFrame(aux)
-
-        if not first_time:
-            for h_aux in h:
-                self.waste_swap = self.waste_swap[self.waste_swap['h1'] != h_aux]
-            self.waste_swap = self.waste_swap.append(aux)
-        else:
-            self.waste_swap = aux
-
-
-
-        aux.sort_values(by=['total_waste'], inplace=True, ascending=False)
-
-        self.waste_swap.sort_values(by=['total_waste'], inplace=True, ascending=False)
-        self.waste_swap = aux.reset_index(drop=True)
-
 
     def update_waste_swap(self, h=None, first_time=False):
 
@@ -649,83 +486,19 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
         self.waste_swap.sort_values(by=['total_waste'], inplace=True, ascending=False)
         self.waste_swap = self.waste_swap.reset_index(drop=True)
 
-    def calculate_waste_swap_old(self):
 
-        points = self.unique_points()
-        aux = {'p1': [], 'p2': [], 'h1': [], 'h2': [], 'total_waste': []}
-        for p1 in points:
-            h_with_p1 = self.h_with_point(p1)
-            h_without_p1 = self.h_without_point(p1)
-            for h1 in h_with_p1:
-                for h2 in h_without_p1[h1:]:
-                    for p2 in self.routes()[h2][1:-1]:
-                        if p2 in self.routes()[h1]:
-                            continue
+    def calculate_waste_change(self, h=None, p=None, first_time=False):
 
-                        results = self.calculate_waste_swap(h1, h2, p1, p2)
-
-                        aux['p1'].append(p1)
-                        aux['p2'].append(p2)
-                        aux['h1'].append(h1)
-                        aux['h2'].append(h2)
-
-                        aux['total_waste'].append(results['total_waste'])
-
-
-                        # total_waste = self.waste_collected()
-                        #
-                        # total_waste -= self.waste_collected_point_h(p1, self.h_with_point(p1))
-                        # total_waste -= self.waste_collected_point_h(p2, self.h_with_point(p2))
-                        #
-                        # new_h_p1 = [h for h in h_with_p1 if h != h1]
-                        # new_h_p1.append(h2)
-                        # new_h_p1.sort()
-                        #
-                        # new_h_p2 = [h for h in self.h_with_point(p2) if h != h2]
-                        # new_h_p2.append(h1)
-                        # new_h_p2.sort()
-                        #
-                        # total_waste += self.waste_collected_point_h(p1, new_h_p1)
-                        # total_waste += self.waste_collected_point_h(p2, new_h_p2)
-
-                        #aux['p1'].append(p1)
-                        #aux['p2'].append(p2)
-                        #aux['h1'].append(h1)
-                        #aux['h2'].append(h2)
-                        #aux['total_waste'].append(total_waste)
-
-                        #time = self.time_h()
-
-                        #time[h1] = self.collection[h1].change_time(p2, self.routes()[h1].index(p1))['new_time']
-                        #time[h2] = self.collection[h2].change_time(p1, self.routes()[h2].index(p2))['new_time']
-
-
-                        # new_route = self.copy()
-                        #
-                        # new_route.change_point(p2, h1, new_route.routes()[h1].index(p1))
-                        # new_route.change_point(p1, h2, new_route.routes()[h2].index(p2))
-                        #
-                        # for h in [h1, h2]:
-                        #
-                        #     new_route.ImprovePath(h)
-                        #
-                        #
-                        # time2 = new_route.time_h()
-                        #
-                        # aux['total_time'].append(sum(time2))
-                        # aux['max_time'].append(max(time2))
-
-        aux = pd.DataFrame(aux)
-        aux = aux[aux['max_time'] <= self.max_time]
-        aux.sort_values(by=['total_waste'], inplace=True, ascending=False)
-        self.waste_swap = aux.reset_index(drop=True)
-
-    def calculate_waste_change(self):
+        if h is None:
+            h_aux = self.h()
+        else:
+            h_aux = [h]
 
         aux = {'p1': [], 'p2': [], 'h': [], 'total_waste': [], 'total_time': [], 'max_time': []}
-        for h in self.h():
+        for h in h_aux:
             for p1 in self.routes()[h][1:-1]:
-                for p2 in [p for p in self.waste_collection.pickup_points if p not in self.routes()[h]]:
+                candidate_points = [point for point in self.waste_collection.pickup_points if point not in self.routes()[h]]
+                for p2 in candidate_points:
                     aux['p1'].append(p1)
                     aux['p2'].append(p2)
                     aux['h'].append(h)
@@ -747,22 +520,58 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
 
                     aux['total_waste'].append(total_waste)
 
-                    time = self.time_h()
+                    aux['total_time'].append(-1)
+                    aux['max_time'].append(-1)
+        if p is not None:
+            for h in self.h_with_point(p):
+                candidate_points = [point for point in self.waste_collection.pickup_points if point not in self.routes()[h]]
+                for p2 in candidate_points:
+                    aux['p1'].append(p)
+                    aux['p2'].append(p2)
+                    aux['h'].append(h)
 
-                    time[h] = self.collection[h].change_time(p2, self.routes()[h].index(p1))['new_time']
+                    total_waste = self.waste_collected()
 
-                    aux['total_time'].append(sum(time))
-                    aux['max_time'].append(max(time))
+                    total_waste -= self.waste_collected_point_h(p, self.h_with_point(p))
+
+                    new_h1 = [h_aux for h_aux in self.h_with_point(p) if h_aux != h]
+                    total_waste += self.waste_collected_point_h(p, new_h1)
+
+                    new_h2 = self.h_with_point(p2)
+                    total_waste -= self.waste_collected_point_h(p2, new_h2)
+
+                    new_h2.append(h)
+                    new_h2.sort()
+
+                    total_waste += self.waste_collected_point_h(p2, new_h2)
+
+                    aux['total_waste'].append(total_waste)
+
+                    aux['total_time'].append(-1)
+                    aux['max_time'].append(-1)
+
+
 
         aux = pd.DataFrame(aux)
-        aux = aux[aux['max_time'] <= self.max_time]
-        aux.sort_values(by=['total_waste'], inplace=True, ascending=False)
-        self.waste_change = aux.reset_index(drop=True)
+
+        if first_time:
+            self.waste_change = aux
+            self.waste_change.sort_values(by=['total_waste'], inplace=True, ascending=False)
+            self.waste_change = self.waste_change.reset_index(drop=True)
+        else:
+            self.waste_change = self.waste_change[self.waste_change['h'] != h]
+            self.waste_change = self.waste_change[self.waste_change['p1'] != p]
+
+            self.waste_change = self.waste_change.append(aux)
+            self.waste_change.sort_values(by=['total_waste'], inplace=True, ascending=False)
+            self.waste_change = self.waste_change.reset_index(drop=True)
 
     def repair_time_constraint(self):
         h_to_fix = [h for h in self.h() if self.time_h()[h] > self.max_time]
         for h in h_to_fix:
-            while self.time_h()[h] > self.max_time:
+        #for h in range(self.horizon):
+            time_constraint = True
+            while time_constraint:
                 time_ini = self.time_aux(self.routes()[h])
 
                 for p in self.routes()[h][1:-1]:
@@ -773,21 +582,8 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
                         best_p = p
                 self.remove_point(h, self.routes()[h].index(best_p))
                 self.ImprovePath(h)
-
-    def repair_time_constraint_old(self):
-        h_to_fix = [h for h in self.h() if self.time_h()[h] > self.max_time]
-        for h in h_to_fix:
-            while self.time_h()[h] > self.max_time:
-                worst_p = self.routes()[h][1]
-                worst_inc = 100
-                for p in self.routes()[h][1:-1]:
-                    new_h = self.h_with_point(p)
-                    new_h.remove(h)
-                    inc = self.waste_collected_point_h(p, self.h_with_point(p)) - self.waste_collected_point_h(p, new_h)
-                    if inc < worst_inc:
-                        worst_p = p
-                        worst_inc = inc
-                self.remove_point(h, self.routes()[h].index(worst_p))
+                if self.time_h()[h] < self.max_time:
+                    time_constraint = False
 
     def opt_swap(self, route, i, k):
         new_route = route[:i]
@@ -796,7 +592,49 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
         new_route += route_aux + route[k + 1:]
         return (new_route)
 
+
+    def linkern(self, route, depth=1, R=[], alpha=2):
+        if depth < alpha:
+            for i, p in enumerate(route[:-1]):
+                if p in R:
+                    continue
+                new_tour = route[:i + 1]
+                aux_tour = route[i + 1:-1]
+                aux_tour.reverse()
+                new_tour += aux_tour
+                new_tour.append(route[-1])
+
+                if self.time_aux(new_tour) < self.time_aux(route):
+                    return new_tour
+                else:
+
+                    new_R = R + [p]
+                    new_tour = self.linkern(new_tour, R=new_R, depth=depth + 1, alpha=alpha)
+                    if self.time_aux(new_tour) < self.time_aux(route):
+                        return (new_tour)
+            return (route)
+        else:
+            return (route)
+
+    def linkern2(self, x):
+
+        for i in range(10):
+            # print(self.time_aux(x))
+            x = self.linkern(x, depth=1, alpha=3, R=[])
+        return(x)
+
     def ImprovePath(self, h):
+
+        x = self.routes()
+
+        x = self.Improve(x, [h])[h]
+
+        x = self.linkern2(x)
+        self.update_route(h, x)
+
+
+
+    def ImprovePath_old2(self, h):
         self.ImprovePath_old(h)
         route = self.routes()[h]
         best_distance = self.time_aux(route)
@@ -816,12 +654,13 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
             if i == len(route) - 1:
                 improvement = True
         self.update_route(h, route)
-        self.ImprovePath_old(h)
+        #self.ImprovePath_old(h)
 
     def Improve(self, routes, h = None):
         if h is None:
             h = []
         times = []
+        routes_aux = [r.copy() for r in routes]
         for h2 in range(self.horizon):
             route = routes[h2]
             if h2 not in h:
@@ -845,20 +684,20 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
                         improvement = True
 
                 times.append(self.time_aux(route))
-        return(times)
+                routes_aux[h2] = route
+        #return(times)
+
+        return(routes_aux)
 
 
     def ImprovePath_old(self, h):
 
-        #for h in range(self.horizon):
-        #print(h)
         ruta0 = self.collection[h]
 
         ruta_orig = ruta0.route()
 
         best = ruta_orig.copy()
         best_time = ruta0.time()
-        #print(best_time)
 
         mejora = True
         while mejora:
@@ -878,14 +717,10 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
         self.update_route(h, best)
 
     def ImprovePath_old2(self, route):
-        #TODO
-        #for h in range(self.horizon):
-        #print(h)
 
         route_aux = route.copy()
         best = route.copy()
         best_time = self.time_aux(route)
-        #print(best_time)
 
         mejora = True
         while mejora:
@@ -898,7 +733,6 @@ class RouteCollection(NeighborhoodAdd, NeighborhoodSwap, NeighborhoodChange):
                     mi = Route(self.waste_collection, self.orig, self.dest, ruta_aux)
                     if mi.time() < best_time:
                         mejora = True
-                        #print(mi.time())
                         best = ruta_aux.copy()
                         best_time = mi.time()
 
