@@ -4,7 +4,7 @@ import copy
 
 class NeighborhoodAdd:
     def add_random(self):
-        for i in range(5):
+        #for i in range(5):
             random_h = random.choice(self.h())
             random_point = random.choice(self.available_points(h=random_h))
             random_position = random.choice(self.available_add_positions(h=random_h))
@@ -54,6 +54,7 @@ class NeighborhoodAdd:
                 time_constraint = True
 
     def add_best(self):
+        self.update_waste_add()
         while True:
 
             self.update_time()
@@ -75,8 +76,8 @@ class NeighborhoodAdd:
             self.waste_add.drop(ind, inplace=True)
 
             self.update_waste_add(points=[point], h=[h])
-            self.update_waste_swap(h=[h])
-            self.calculate_waste_change(h, point)
+            #self.update_waste_swap(h=[h])
+            #self.calculate_waste_change(h, point)
             self.tabu.update(self.routes())
 
             #print(self.waste_collected())
@@ -84,7 +85,7 @@ class NeighborhoodAdd:
 class NeighborhoodSwap:
 
     def swap_random(self):
-        for i in range(5):
+        #for i in range(5):
             r = self.routes()
 
             h = [h for h, r in enumerate(r) if len(r) > 2]
@@ -150,7 +151,7 @@ class NeighborhoodSwap:
                 time_constraint = True
 
     def swap_best(self):
-
+        self.update_waste_swap()
         while not self.waste_swap.empty:
 
             self.update_time_swap()
@@ -174,9 +175,9 @@ class NeighborhoodSwap:
             self.ImprovePath(h1)
             self.ImprovePath(h2)
 
-            self.update_waste_add(points=[p1, p2], h=[h1, h2])
+            #self.update_waste_add(points=[p1, p2], h=[h1, h2])
             self.update_waste_swap(h=[h1, h2])
-            self.calculate_waste_change()
+            #self.calculate_waste_change()
             self.tabu.update(self.routes())
 
             #print(self.waste_collected())
@@ -185,7 +186,7 @@ class NeighborhoodSwap:
 class NeighborhoodChange:
 
     def change_random(self):
-        for i in range(5):
+        #for i in range(5):
             r = self.routes()
 
             h = [h for h, r in enumerate(r) if len(r) > 2]
@@ -248,7 +249,7 @@ class NeighborhoodChange:
 
     def change_best(self):
 
-
+        self.calculate_waste_change()
         while not self.waste_change.empty:
             print(self.waste_collected())
             self.update_time_change()
@@ -274,8 +275,8 @@ class NeighborhoodChange:
             self.tabu.update(self.routes())
 
 
-            self.update_waste_add(points=[p1, p2],h=[h])
-            self.update_waste_swap(h=[h])
+            #self.update_waste_add(points=[p1, p2],h=[h])
+            #self.update_waste_swap(h=[h])
 
             self.calculate_waste_change(h, p1)
 

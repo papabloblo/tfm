@@ -14,7 +14,6 @@ class WasteCollection:
         self.times = self.read_times(file_times)
         self.pickup_points = self.extract_pickup_points()
 
-
     def read_times(self, file_times):
         times = {}
         with open(file_times) as csv_file:
