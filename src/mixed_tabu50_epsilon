@@ -1,0 +1,8 @@
+
+python3.8 src/configFile.py mixed_tabu50_epsilon mixed 5 5 5 50 True
+
+nohup python3.8 src/ejecucion.py results/mixed_tabu50_epsilon 1 > results/mixed_tabu50_epsilon/print_01 2> results/mixed_tabu50_epsilon/print_01 &
+nohup python3.8 src/ejecucion.py results/mixed_tabu50_epsilon 2 > results/mixed_tabu50_epsilon/print_02 2> results/mixed_tabu50_epsilon/print_02 &
+nohup python3.8 src/ejecucion.py results/mixed_tabu50_epsilon 3 > results/mixed_tabu50_epsilon/print_03 2> results/mixed_tabu50_epsilon/print_03 &
+nohup python3.8 src/ejecucion.py results/mixed_tabu50_epsilon 4 > results/mixed_tabu50_epsilon/print_04 2> results/mixed_tabu50_epsilon/print_04 &
+nohup python3.8 src/ejecucion.py results/mixed_tabu50_epsilon 5 > results/mixed_tabu50_epsilon/print_05 2> results/mixed_tabu50_epsilon/print_05 &

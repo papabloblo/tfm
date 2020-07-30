@@ -1,0 +1,7 @@
+
+
+nohup python3.8 src/ejecucion.py pickup-point-filling-rates-paper.csv 0 15 1234 5 paper_01 > log/paper_01.txt 2> log/paper_01.txt &
+nohup python3.8 src/ejecucion.py pickup-point-filling-rates-paper.csv 0 15 1234 5 paper_02 > log/paper_02.txt 2> log/paper_02.txt &
+nohup python3.8 src/ejecucion.py pickup-point-filling-rates-paper.csv 0 15 1234 5 paper_03 > log/paper_03.txt 2> log/paper_03.txt &
+nohup python3.8 src/ejecucion.py pickup-point-filling-rates-paper.csv 0 15 1234 5 paper_04 > log/paper_04.txt 2> log/paper_04.txt &
+nohup python3.8 src/ejecucion.py pickup-point-filling-rates-paper.csv 0 15 1234 5 paper_05 > log/paper_05.txt 2> log/paper_05.txt &

@@ -1,0 +1,8 @@
+
+python3.8 src/configFile.py mixed_tabu50 mixed 5 5 5 50 False
+
+nohup python3.8 src/ejecucion.py results/mixed_tabu50 1 > results/mixed_tabu50/print_01 2> results/mixed_tabu50/print_01 &
+nohup python3.8 src/ejecucion.py results/mixed_tabu50 2 > results/mixed_tabu50/print_02 2> results/mixed_tabu50/print_02 &
+nohup python3.8 src/ejecucion.py results/mixed_tabu50 3 > results/mixed_tabu50/print_03 2> results/mixed_tabu50/print_03 &
+nohup python3.8 src/ejecucion.py results/mixed_tabu50 4 > results/mixed_tabu50/print_04 2> results/mixed_tabu50/print_04 &
+nohup python3.8 src/ejecucion.py results/mixed_tabu50 5 > results/mixed_tabu50/print_05 2> results/mixed_tabu50/print_05 &

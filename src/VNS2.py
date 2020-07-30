@@ -3,7 +3,7 @@ import time
 import json
 
 class VNS:
-    def __init__(self, collection, path):
+    def __init__(self, collection, path, epsilon=False):
         self.iter = 0
         self.best_collection = collection.copy()
         self.candidate_collection = collection.copy()
@@ -12,13 +12,16 @@ class VNS:
 
         self.neighbor_k = 0
         self.neighbor_random_k = 0
-        self.epsilon = 0.01
+        self.epsilon = epsilon
 
     def epsilon_change(self):
         epsilon = 0
-        #epsilon = max(0, (300 - self.iter) / 300)
+        if self.epsilon:
+            # epsilon = max(0, (300 - self.iter) / 300)
+            epsilon = 1/(1+0.0005*(self.iter**2))
+
         print(epsilon)
-        return(epsilon)
+        return epsilon
 
     def random_neighbor(self):
         if self.neighbor_random_k == 0:
@@ -38,18 +41,29 @@ class VNS:
                 or not self.candidate_collection.time_constraint():
             if self.candidate_collection.waste_collected() > self.candidate_collection2.waste_collected() \
                     and self.candidate_collection.time_constraint():
+
                 self.candidate_collection2 = self.candidate_collection.copy()
             else:
+
                 self.candidate_collection = self.candidate_collection2.copy()
             self.neighbor_k += 1
         else:
+
             self.candidate_collection2 = self.candidate_collection.copy()
             self.neighbor_k = 0
 
     def update_neighbor_random_k(self):
         if self.candidate_collection.waste_collected() <= self.best_collection.waste_collected() + self.epsilon_change() \
                 or not self.candidate_collection.time_constraint():
+
+            if self.candidate_collection.waste_collected() > self.best_collection.waste_collected() \
+                    and self.candidate_collection.time_constraint():
+
+                self.best_collection = self.candidate_collection.copy()
+
+
             self.candidate_collection = self.best_collection.copy()
+
             self.neighbor_random_k += 1
         else:
             self.best_collection = self.candidate_collection.copy()
@@ -76,11 +90,15 @@ class VNS:
     def VND(self, k_max):
         self.neighbor_k = 0
         while self.neighbor_k <= k_max:
+
             self.neighborhood_k()
+
             self.update_neighbor_k()
             print("Total time:", round((time.time() - self.ini_time)/60, 2), "minutes")
+
             self.print()
             print()
+
             self.log()
 
     def GVNS(self, l_max, k_max, t_max):
@@ -96,7 +114,8 @@ class VNS:
                 self.VND(k_max=l_max)
                 self.update_neighbor_random_k()
             t += 1
-        return t
+        print('End')
+        #return t
 
     def print(self, best=False):
         if best:
@@ -113,7 +132,7 @@ class VNS:
               round(candidate.waste_collected() / max_waste * 100, 2), "%)")
         print('Best waste collected:', round(best_waste, 2))
 
-        a = {p: candidate.waste_collected_point_h2(p, candidate.point_h2(p)) for p in candidate.unique_points()}
+        a = {p: candidate.waste_collected_point_h2(p, candidate.h_with_point(p)) for p in candidate.unique_points()}
         mi = []
         for i in a.values():
             mi += list(i.values())
@@ -139,7 +158,7 @@ class VNS:
             "candidate2": [[int(r2) for r2 in r] for r in self.candidate_collection2.routes()],
             "time": time.time() - self.ini_time
         }
-        f = open(self.path+"/log.txt", "a")
+        f = open(self.path, "a")
         f.write(json.dumps(x) + '\n')
         f.close()
 

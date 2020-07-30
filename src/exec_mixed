@@ -1,0 +1,7 @@
+
+
+nohup python3.8 src/ejecucion.py pickup-point-filling-rates-mixed.csv 5 5 1234 5 mixed_01 > log/mixed_01.txt 2> log/mixed_01.txt &
+nohup python3.8 src/ejecucion.py pickup-point-filling-rates-mixed.csv 5 5 1234 5 mixed_02 > log/mixed_02.txt 2> log/mixed_02.txt &
+nohup python3.8 src/ejecucion.py pickup-point-filling-rates-mixed.csv 5 5 1234 5 mixed_03 > log/mixed_03.txt 2> log/mixed_03.txt &
+nohup python3.8 src/ejecucion.py pickup-point-filling-rates-mixed.csv 5 5 1234 5 mixed_04 > log/mixed_04.txt 2> log/mixed_04.txt &
+nohup python3.8 src/ejecucion.py pickup-point-filling-rates-mixed.csv 5 5 1234 5 mixed_05 > log/mixed_05.txt 2> log/mixed_05.txt &
