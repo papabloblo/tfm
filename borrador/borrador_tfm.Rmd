@@ -1,0 +1,165 @@
+---
+title: "Untitled"
+author: "Pablo Hidalgo García"
+date: "29/7/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Introducción
+
+En la compleja sociedad moderna aparecen retos que es necesario abordar y solucionar de la mejor forma posible para que la vida sea fácil y llevadera. Además, existe una conciencia creciente acerca del impacto medioambiental de nuestras actividades por lo que las soluciones a estos retos deben tenerlo en consideración. Uno de esos muchos retos es la gestión de los residuos. La sociedad de consumo moderna implica una alta generación de residuos que es necesario procesar para reducir la huella medioambiental así como evitar la aparición de enfermedades o las incomodidades propias de la convivencia con los residuos. En el año 2017 se recogieron en España más de 22.000 toneladas de residuos (alrededor de 460 kilogramos por habitante) y que da cuenta de la magnitud y la dificultad en la gestión. En áreas rurales o insulares, esta gestión es complicada en el sentido de que los trayectos pueden ser amplios y la frecuencia de recogida no puede ser diaria adaptándose la recogida al comportamiento de la generación de los residuos. Por ello, es fundamental que la recogida de estos residuos se haga de la forma más eficiente posible. Se pueden distinguir dos formas en la que la recogida de los residuos se puede mejorar. La primera de ellas es realizar inversiones que consigan adaptar los recursos e infraestructuras disponibles (camiones de recogida, puntos de recogida, plantas de procesamiento, etcétera) a los patrones de generación de residuos; la segunda es optimizar la recogida contando con los recursos ya existentes. 
+
+Es en este segundo enfoque en el que se incide en este trabajo, en particular en optimizar las rutas que recorren los camiones con el objetivo de recoger la máxima cantidad de residuo conforme a las restricciones de recursos. Las restricciones son:
+
+- plantas de procesamiento,
+- puntos de recogida,
+- camiones,
+- horas de trabajo.
+
+De estas restricciones la más fuerte es el número máximo de horas de trabajo que se consideran de 6.5 horas dejando un margen para cualquier eventualidad. Esta restricción es obvia para que los trabajadores descansen adecuadamente y, además, por la naturaleza de la recogida de residuos, se fomenta la recogida durante los periodos nocturnos para molestar lo menos posible a la población.
+
+Este trabajo se desarrolla en este contexto tomando como escenario de estudio la isla de la Palma (Islas Canarias) aunque su aplicación se puede extender y adaptar a cualquier otra área geográfica. La información disponible son: patrones de generación de residuos, emplazamiento de los contenedores y sus características, detalles de las rutas, tiempo y coste y las restricciones de los recursos disponibles. Existen tres puntos de origen y destino de las rutas situadas en tres municipios de la Palma: Breña Alta, Mazo y Los Llanos. Cada vehículo debe llevar a cabo una ruta diaria y, cada ruta se define como un secuencia de putnos de recogida que deben ser visitados por cada vehículo. Se considera que cada vez que un camión visita un punto de recogida, éste recoge todo el residuo acumulado.
+
+Las principales contribuciones de este trabajo son:
+
+1. Propuesta de un algoritmo metaheurístico híbrido entre una búsqudda tabú y una búsqueda por vecindarios variables.
+1. Comparativa del algoritmo propuesto con la ruta real y con EXPÓSITO.
+1. Estudio del algoritmo bajo distintos escenarios.
+
+
+Este trabajo está organizado de la siguiente forma. La sección 2 hace un repaso de la literatura existente
+
+En el problema se han considerado al recogida independiente de dos tipos de residuos: residuos de papel y cartón y residuos plásticos identificados, habitualmente, con los colores marrones y amarillos, respectivamente. Para cada tipo de residuo se considera un camión con un punto de origen y un punto de destino (el almacén y la planta de tratamiento de residuos) y una serie de puntos de recogida candidatos. Cada punto de recogida tiene su propia tasa de llenado que determina el nivel de residuo hasta el punto en el que esté saturado. La restricción principal que hay que abordar es la del tiempo máximo de trabajo que los operarios considerando un tiempo de 6.5 horas. 
+
+Este trabajo toma como punto de partida el ya iniciado en EXPÓSITO. En ese trabajo se aplica modelos metaheurísticos GRASP (greedy randomized adaptative search procedure) para abordar el problema. En este trabajo se se desarrolla un algoritmo híbrido entre la búsqueda tabú y la búsqueda por vecindarios. Además, en EXPÓSITO, los resultados obtenidos se comparan con las rutas existentes en la compañía de recogida de residuos en una semana concreta. En este trabajo, el estudio se extiende para evaluar el comportamiento del algoritmo para distintos escenarios (condiciones iniciales distintas así como distintos horizontes temporales.
+
+
+
+
+El objetivo de este trabajo es el de aplicar algoritmos metaheurísticos en la gestión de las rutas de los residuos como alternativa a lo estudiado en (Expósito).
+
+En este trabajo se ha utilizado un algoritmo híbrido entre la búsqueda tabú y la búsqueda por vecindarios variables (Variable Neighborhood search o VNS).
+
+
+
+
+
+
+
+Durante el año 2017 se recogieron en España más de 22.000 toneladas de residuos. La eficiencia en su recogida hace que 
+
+
+En el conjunto de la sociedad se presentan retos que es necesario abordar. Por ejemplo, la gestión eficiente del tráfico o la gestión de los residuos. 
+
+Vivimos en una sociedad cada vez más preocupada por el impacto 
+
+
+**Esquema de la introducción**
+
+1. Problema de la gestión de residuos en general.
+1. Características de la gestión en zonas rurales o remotas.
+1. Descripción del problema del trabajo.
+1. Pinceladas de la solución.
+1. Relación con EXPÓSITO.
+1. Novedades de este trabajo.
+
+
+# Descripciónm del problema
+
+
+El problema se puede describir formalmente como un grafo completo dirigido $\mathcal{G} = (\Theta, A)$ donde $\Theta=\{\theta_1,\ldots, \theta_n\}$ se corresponde con el conjunto de los $n$ emplazamientos y $A=\{(\theta_i,\theta_j):\theta_i,\theta_j\in\Theta, i\neq j\}$, las aristas del grafo. Además, el conjunto $\Theta = P \cup E$ de forma que $P\cap E = \emptyset$. Conocemos el tiempo de viaje entre dos emplazamientos $\theta_i, \theta_j$ al que denominaremos $d_{ij}>0$ y que, debido a la orografía del terreno y la infraestructura de carreteras, en general, $d_{ij}\neq d_{ji}$.
+
+El conjunto de los puntos de recogida se recogen por una flota de vehículos $\mathcal{V} = \{v_1,\ldots, v_k\}$. El origen del vehículo $v\in\mathcal{V}$ se denomina como $o(v)\in E$ y $t(v)\in E$ al destino final del vehículo.
+
+Se define un horizonte de predicción $\mathcal{H}=\{1,2,\ldots, h\}$.
+
+$$
+F_i(d) = \min\{1, f_i(d)\}
+$$
+
+Aunque la función de residuos acumulados $f_i(d)$ puede tomar cualquier forma, en este trabajo se ha considerado una función lineal $f_i(d) = b_i + q_i\cdot d$
+
+# Formulación matemática
+
+En esta sección expresaremos el problema de optimización que queremos resolver. Éste se puede formular como un problema de programación entera mixta (Mixed-Integer Programming o MIP). Necesitamos las siguientes variables:
+
+- $X_{ijh}^v$: variable que toma valor $1$ si el vehículo $v\in\mathcal{V}$ va desde el punto $\theta_i$ hasta el $theta_j$ en el día $h\in \mathcal{H}$ y 0 en caso contrario, $\forall (\theta_i,\theta_j) \in A$
+- $Y_{ih}^v$: toma valor $1$ si se visita el punto $\theta_i\in\Theta$ por el vehículo $v\in\mathcal{V}$ en el día $h\in\mathcal{H}$ y 0 en caso contrario.
+- $\mathcal{T}_{ih}\in\mathbb{R}$: tiempo de recogida del punto $\theta_i\in\Theta$. Nótese que esta variable no depende de ningún vehículo ya que se considera que un punto de recogida solo se puede visitar por un único vehículo en un mismo día.
+
+Así, las restricciones del problema son las siguientes:
+
+$$
+\sum_{j \in P} X_{o(v)jh}^v= 1 
+$$
+
+$$
+\sum_{i \in P} X_{it(v)h}^v= 1 
+$$
+
+$$
+\sum_{j\in\Theta}X_{jkh}^v = \sum_{j\in\Theta}X_{kjh}^v, k\in P,   
+$$
+
+$$
+\sum_{j\in\Theta} X_{ijh}^v = Y_{ih}^v
+$$
+$$
+\sum_{v\in \mathcal{V}} Y_{ih}^v \leq 1
+$$
+
+$$
+T_{jh} \geq T_{ih} + s_i + t_{ij} - M\cdot \big(1-\sum_{v\in \mathcal{V}} X_{ijh}^v\big)
+$$
+
+$$
+T_{ih} + s_i + t_{it(v)} \leq W_{vh}
+$$
+
+$$
+X_{ijh}^v \in \{0, 1\}
+$$
+
+$$
+Y_{ih}^v \in \{0, 1\}
+$$
+$$
+T_{ih} \geq 0 
+$$
+
+El objetivo es
+
+$$
+\max \sum_{v \in V}\sum_{i\in P} \sum_{h\in H} F_i(\eta_{ih})\cdot Y_{ih}^v
+$$
+# Solution approach
+
+Comenzamos definiendo los vecindarios.
+
+Una ruta $r_h^v = (o(v), t(v))$
+
+
+
+## Vecindario 1: añadir punto de recogida
+
+## Vecindario 2: intercambiar puntos de recogida entre días
+
+## Vecindario 3: intercambiar punto de recogida con uno no visitado
+
+# Vecindarios
+
+## Vecindario 1: añadir
+
+Sea $h\in\mathcal{H}$ un día del horizonte y $r_h$ la ruta de ese día tal que $r_i=(o(\nu), p_1, p_2, \ldots, p_n, t(\nu))$. Representamos todas las rutas como $R=\{r_1, r_2,\ldots, r_{|H|}\}$.
+
+Este vecindario busca añadir un nuevo punto $p\in P(\nu)$ tal que el incremento en la función objetivo sea máximo.
+
+
+## Vecindario 2: intercambiar entre días
+
+## Vecindario 3: cambiar puntos de recogida

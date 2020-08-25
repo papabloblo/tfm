@@ -1,0 +1,138 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Untitled},
+  pdfauthor={Pablo Hidalgo García},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+
+\title{Untitled}
+\author{Pablo Hidalgo García}
+\date{29/7/2020}
+
+\begin{document}
+\maketitle
+
+\hypertarget{introducciuxf3n}{%
+\section{Introducción}\label{introducciuxf3n}}
+
+En la compleja sociedad moderna aparecen retos que es necesario abordar
+y solucionar de la mejor forma posible para que la vida sea fácil y
+llevadera. Uno de esos muchos retos es la gestión de los residuos. La
+sociedad de consumo moderna implica una generación de residuos que hay
+que recoger y tratar para mejorar la vida en las ciudades y el impacto
+mediambiental. En el año 2017 se recogieron en España más de 22.000
+toneladas de residuos (alrededor de 460 kilogramos por habitante). Se
+pueden distinguir dos formas en la que la recogida de los residuos se
+puede mejorar. La primera de ellas es una inversión en aumentar los
+recursos disponibles (por ejemplo, un aumento de la flota de camiones de
+recogida); la segunda es optimizar la recogida con los recursos ya
+existentes. Es en este segundo enfoque en el que se incide en este
+trabajo, en particular en optimizar las rutas que recorren los camiones
+con el objetivo de recoger la máxima cantidad de residuo conforme a las
+restricciones de recursos.
+
+El objetivo de este trabajo es el de aplicar algoritmos metaheurísticos
+en la gestión de las rutas de los residuos como alternativa a lo
+estudiado en (Expósito).
+
+En este trabajo se ha utilizado un algoritmo híbrido entre la búsqueda
+tabú y la búsqueda por vecindarios variables (Variable Neighborhood
+search o VNS).
+
+En el problema se han considerado al recogida independiente de dos tipos
+de residuos: residuos de papel y cartón y residuos plásticos
+identificados, habitualmente, con los colores marrones y amarillos,
+respectivamente. Para cada tipo de residuo se considera un camión con un
+punto de origen y un punto de destino (el almacén y la planta de
+tratamiento de residuos) y una serie de puntos de recogida candidatos.
+Cada punto de recogida tiene su propia tasa de llenado que determina el
+nivel de residuo hasta el punto en el que esté saturado. La restricción
+principal que hay que abordar es la del tiempo máximo de trabajo que los
+operarios considerando un tiempo de 6.5 horas.
+
+Durante el año 2017 se recogieron en España más de 22.000 toneladas de
+residuos. La eficiencia en su recogida hace que
+
+En el conjunto de la sociedad se presentan retos que es necesario
+abordar. Por ejemplo, la gestión eficiente del tráfico o la gestión de
+los residuos.
+
+Vivimos en una sociedad cada vez más preocupada por el impacto
+
+\hypertarget{vecindarios}{%
+\section{Vecindarios}\label{vecindarios}}
+
+\hypertarget{vecindario-1-auxf1adir}{%
+\subsection{Vecindario 1: añadir}\label{vecindario-1-auxf1adir}}
+
+Sea \(h\in\mathcal{H}\) un día del horizonte y \(r_h\) la ruta de ese
+día tal que \(r_i=(o(\nu), p_1, p_2, \ldots, p_n, t(\nu))\).
+Representamos todas las rutas como \(R=\{r_1, r_2,\ldots, r_{|H|}\}\).
+
+Este vecindario busca añadir un nuevo punto \(p\in P(\nu)\) tal que el
+incremento en la función objetivo sea máximo.
+
+\hypertarget{vecindario-2-intercambiar-entre-duxedas}{%
+\subsection{Vecindario 2: intercambiar entre
+días}\label{vecindario-2-intercambiar-entre-duxedas}}
+
+\hypertarget{vecindario-3-cambiar-puntos-de-recogida}{%
+\subsection{Vecindario 3: cambiar puntos de
+recogida}\label{vecindario-3-cambiar-puntos-de-recogida}}
+
+\end{document}
