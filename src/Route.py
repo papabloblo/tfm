@@ -1,7 +1,7 @@
 from itertools import chain
 import pandas as pd
 
-from Neighborhood2 import NeighborhoodAdd, NeighborhoodChange, NeighborhoodSwap
+from Neighborhood import NeighborhoodAdd, NeighborhoodChange, NeighborhoodSwap
 
 from Tabu import Tabu
 

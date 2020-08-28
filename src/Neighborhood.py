@@ -1,280 +1,96 @@
-import pandas as pd
 import random
-import time
-from Tabu import Tabu
 
-class Neighborhood(Tabu):
-    def __init__(self, collection, best_collection):
-        super().__init__()
-        self.collection = collection
-        self.best_collection = best_collection
-        #self.tabu_list = {}
-        #self.waste_add = self.waste_add_ini()
+class NeighborhoodAdd:
+    def add_point(self, point, h, position):
+        self.collection[h].add_point(point, position)
+        self.update_waste_collected_point()
 
-    def tabu_p_h(self, p, h):
-        tabu = False
-        if p in self.tabu().keys():
-            tabu = h in self.tabu()[p]
-        return tabu
+    def add_random(self):
+        random_h = random.choice(self.H())
+        random_point = random.choice(self.available_points(h=random_h))
+        random_position = random.choice(self.available_add_positions(h=random_h))
 
-    def points_h_available(self, new_collection=None):
-        """
+        self.add_point(random_point, random_h, random_position)
+        self.tabu.update(self.routes())
 
-        :param new_collection:
-        :return: dictionary with points and h available
-        """
-        if new_collection is None:
-            new_collection = self.collection.copy()
+        self.update_waste_add(points=[random_point], h=[random_h])
 
-        pickup_points = self.collection.waste_collection.pickup_points
-        h_p = {}
-        for p in pickup_points:
-            h_aux = new_collection.h_without_point(p)
-            if p in self.tabu():
-                h_aux = [h for h in h_aux if h not in self.tabu()[p]]
+    def update_time(self):
+        time_constraint = False
+        while not time_constraint and not self.waste_add.empty:
+            max_waste = self.waste_add['waste'].max()
 
-            if len(h_aux) > 0:
-                h_p[p] = h_aux
+            rows_to_update = self.waste_add[(self.waste_add['waste'] == max_waste) &
+                                        (self.waste_add['time'] == -1)
+                                    ]
 
-        return h_p
+            for ind in rows_to_update.index:
+                point = rows_to_update.loc[ind, 'point']
+                h = rows_to_update.loc[ind, 'h']
 
-    def points_add_h_available(self, new_collection=None):
-        '''
-        Tengo dudas de que se cumpla la desigualdad triangular:
-            d(a, b) <= d(a,c) + d(c, b)
-        :param new_collection:
-        :return:
-        '''
-        if new_collection is None:
-            new_collection = self.collection
-        points = self.points_h_available()
-        points2 = self.points_h_available()
-        for p, h in points.items():
-            h2 = []
-            for h_aux in h:
-                min_time = self.collection.waste_collection.min_time_point(p, new_collection.routes()[h_aux])
-                if min_time + new_collection.total_time() <= self.collection.max_time:
-                    h2.append(h_aux)
-            if len(h2) > 0:
-                points2[p] = h2
-            else:
-                del points2[p]
-        return points
+                # routes = self.routes()
+                #
+                # routes[h] = [routes[h][0], point] + routes[h][1:]
+                #
+                # routes[h] = self.collection[h].Improve(routes[h], inplace=False)
+                #
+                # time_saved = self.time_h()
+                #
+                # time_saved[h] = self.waste_collection.calculate_route_time(routes[h])
 
-    def waste_add(self, new_collection=None):
-        if new_collection is None:
-            new_collection = self.collection.copy()
+                time_saved = self.time_h()
 
-        #points_h_available = self.points_h_available(new_collection)
-        points_h_available = self.points_h_available(new_collection)
-        waste = {'point': [], 'h': [], 'waste': []}
-        for p, h in points_h_available.items():
+                time_saved[h] = self.collection[h].add_time(point, 0)
 
-            h_w = new_collection.add_point_waste_collected(p, h=h)
-            waste['point'] += [p]*len(h_w)
-            waste['h'] += h_w.keys()
-            waste['waste'] += h_w.values()
-
-        waste = pd.DataFrame(waste)
-        waste.sort_values(by=['waste'], inplace=True, ascending=False)
-        waste = waste.reset_index(drop=True)
-        return waste
-
-    def add_best_neighbors(self, new_collection=None, random_choice=False):
-        if new_collection is None:
-            new_collection = self.collection.copy()
-        best = new_collection.copy()
-        x = False
-        #print(self.points_h_available())
-        if new_collection.time_constraint():
-
-            w = self.waste_add(new_collection)
-            routes = new_collection.routes()
-            #print(self.tabu_list)
-            new_routes = []
-            best_point = None
-
-            for waste in w['waste'].unique():
-                w_aux = w[w['waste'] == waste]
-                #print(w_aux)
-                if random_choice:
-                    rows = [random.choice(w_aux.index)]
+                if max(time_saved) > self.max_time:
+                    self.waste_add.drop(ind, inplace=True)
                 else:
-                    rows = w_aux.index
+                    self.waste_add.loc[ind, 'time'] = sum(time_saved)
 
-                for i in rows:
+            if max_waste == self.waste_add['waste'].max():
+                time_constraint = True
 
-                    point = w.loc[i, 'point']
-                    h = w.loc[i, 'h']
-
-                    new_routes2 = []
-                    for pos in range(len(routes[h]) - 1):
-                        new_route = new_collection.copy()
-                        new_route.add_point(point, h, pos)
-
-                        new_routes2.append(new_route)
-                        if new_route.time_constraint():
-                            if new_route.waste_collected() > best.waste_collected():
-                                best = new_route.copy()
-                                best_point = point
-                                x = True
-                                #print(best_point)
-                                #self.add_tabu({p: list(range(best.horizon)) for p in best.waste_collection.pickup_points if p != point})
-                                #self.add_tabu({point: [h]})
+    def add_best(self):
+        #self.update_waste_add()
+        self.waste_add = self.calculate_waste_add2()
+        while True:
 
 
-                            elif new_route.waste_collected() == best.waste_collected() and new_route.total_time() < best.total_time():
-                                best = new_route.copy()
-                                best_point = point
-                                x = True
-                                #self.add_tabu(
-                                 #   {p: list(range(best.horizon)) for p in best.waste_collection.pickup_points
-                                  #   if p != point})
-                                #self.add_tabu({point: [h]})
-                        else:
-                            self.add_tabu({point: list(range(best.horizon))})
-                    #new_collection = best.copy()
+            self.update_time()
+
+            if self.waste_add.empty:
+
+                break
+
+            aux = self.waste_add[(self.waste_add['waste'] == self.waste_add['waste'].max())]
+
+            ind = random.choice(aux.index)
+
+            point = aux.loc[ind, 'point']
+            h = aux.loc[ind, 'h']
 
 
+            self.add_point(point, h, position=0)
 
-                    #new_routes2 = self.filter_routes_time_constraint(new_routes2)
-                    #if len(new_routes2) == 0:
-                     #   self.update_tabu_list({point: [h]})
-                        #self.add_tabu({point: list(range(self.collection.horizon))})
-                    #else:
-                     #   new_routes += new_routes2
+            self.waste_add.drop(ind, inplace=True)
 
-                #new_routes = self.filter_routes_time_constraint(new_routes)
-                if x:
-                    # if best_point is not None:
-                    #
-                    #     w = self.waste_add(best)
-                    #     w = w[w['point'] == best_point]
-                    #     if len(w) > 0:
-                    #         w_aux = w[w['waste'] == max(w['waste'])]
-                    #         rows = w_aux.index
-                    #         for i in rows:
-                    #
-                    #             point = w.loc[i, 'point']
-                    #             h = w.loc[i, 'h']
-                    #
-                    #             new_routes2 = []
-                    #             for pos in range(len(routes[h]) - 1):
-                    #                 new_route = best.copy()
-                    #                 new_route.add_point(point, h, pos)
-                    #
-                    #                 new_routes2.append(new_route)
-                    #                 if new_route.time_constraint():
-                    #                     if new_route.waste_collected() > best.waste_collected():
-                    #                         best = new_route.copy()
-                    #                         best_point = point
-                    #                         x = True
-                    #                         # print(best_point)
-                    #                         # self.add_tabu({p: list(range(best.horizon)) for p in best.waste_collection.pickup_points if p != point})
-                    #                         # self.add_tabu({point: [h]})
-                    #
-                    #
-                    #                     elif new_route.waste_collected() == best.waste_collected() and new_route.total_time() < best.total_time():
-                    #                         best = new_route.copy()
-                    #                         best_point = point
-                    #                         x = True
-                    #                         # self.add_tabu(
-                    #                         #   {p: list(range(best.horizon)) for p in best.waste_collection.pickup_points
-                    #                         #   if p != point})
-                    #                         # self.add_tabu({point: [h]})
-                    #
-                    #     # if len(self.points_h_available().keys()) == 1:
-                    #     #     self.add_tabu({best_point: list(range(best.horizon))})
-                    #     # #print(self.points_h_available())
-                    #     # else:
-                    #     #     self.add_tabu(
-                    #     #         {p: list(range(best.horizon)) for p in best.waste_collection.pickup_points if
-                    #     #          p != best_point}, self.max_tabu - 1)
-                    self.add_tabu({best_point: list(range(best.horizon))})
-                    break
-        else:
-            best = new_collection
-        #if len(new_routes) == 0:
-         #   new_routes = [new_collection]
-        #new = self.tiebreaker(new_routes)
+            self.update_waste_add(points=[point], h=[h])
 
-        return best
+            self.tabu.update(self.routes())
 
-    def random_add_point(self):
-        points_h_available = self.points_h_available()
-        new_route = self.collection.copy()
+class NeighborhoodSwap:
 
-        random_point = random.choice(list(points_h_available.keys()))
-        random_h = random.choice(points_h_available[random_point])
+    def swap_point(self, h1, h2, position1, position2):
+        routes = self.routes()
+        p1 = routes[h1][position1]
+        p2 = routes[h2][position2]
+        self.collection[h1].change_point(p2, position1)
+        self.collection[h2].change_point(p1, position2)
+        self.update_waste_collected_point()
 
-        route = self.collection.routes()[random_h]
-        position = random.choice(range(len(route) - 1))
+    def swap_random(self):
 
-        new_route.add_point(random_point, random_h, position)
-
-        return new_route
-
-    def swap_best_neighbors(self, new_collection=None):
-        if new_collection is None:
-            new_collection = self.collection.copy()
-        #self.tabu_list = {}
-        candidate = new_collection.copy()
-        if not candidate.time_constraint():
-            H1 = [h for h in range(candidate.horizon) if candidate.time_h()[h] > candidate.max_time]
-            if len(H1) > 1:
-                H2 = H1.copy()
-            else:
-                H2 = list(range(candidate.horizon))
-        else:
-            H1 = list(range(candidate.horizon))
-            H2 = H1.copy()
-        print(H1)
-        print(H2)
-        w = self.best_collection.waste_collected()
-        total_time = self.best_collection.total_time()
-        w = self.best_collection.waste_collected()
-        total_time = self.best_collection.total_time()
-        while len(H1) > 0:
-            h1 = H1.pop()
-
-            H2.remove(h1)
-            r1 = candidate.routes()[h1]
-            for pos1 in range(1, len(r1)-1):
-                p1 = r1[pos1]
-                if self.tabu_p_h(p1, h1):
-                    continue
-                for h2 in H2:
-
-                #for h2 in range(h1+1, candidate.horizon):
-
-                    r2 = candidate.routes()[h2]
-                    for pos2 in range(1, len(r2) - 1):
-                        p2 = r2[pos2]
-                        if p1 == p2 or self.tabu_p_h(p2, h2):
-                            continue
-
-                        new = candidate.copy()
-                        new.swap_point(h1, h2, pos1, pos2)
-                        if new.time_constraint():
-                            if new.waste_collected() > w:
-                                candidate = new
-                                w = new.waste_collected()
-                                total_time = candidate.total_time()
-                                self.delete_h([h1, h2])
-                            elif new.waste_collected() == w and new.total_time() < total_time:
-                                candidate = new
-                                w = new.waste_collected()
-                                total_time = candidate.total_time()
-                                self.delete_h([h1, h2])
-
-            #if candidate.waste_collected() > new_collection.waste_collected():
-            #    break
-
-        return candidate
-
-    def random_swap_point(self):
-        new_route = self.collection.copy()
-        r = new_route.routes()
+        r = self.routes()
 
         h = [h for h, r in enumerate(r) if len(r) > 2]
         if len(h) > 0:
@@ -282,64 +98,84 @@ class Neighborhood(Tabu):
             h.remove(h1)
             h2 = random.choice(h)
 
-            pos1 = random.choice(range(1, len(r[h1])-1))
-            pos2 = random.choice(range(1, len(r[h2])-1))
+            pos1 = random.choice(range(1, len(r[h1]) - 1))
+            pos2 = random.choice(range(1, len(r[h2]) - 1))
 
-            new_route.swap_point(h1, h2, pos1, pos2)
-        return new_route
+            self.swap_point(h1, h2, pos1, pos2)
 
-    def change_best_neighbors(self, new_collection=None):
-        if new_collection is None:
-            new_collection = self.collection.copy()
+            self.tabu.update(self.routes())
 
-        candidate = new_collection.copy()
-        if not candidate.time_constraint():
-            H = [h for h in range(candidate.horizon) if candidate.time_h()[h] > candidate.max_time]
-            w = self.best_collection.waste_collected()
-            total_time = self.best_collection.total_time()
-        else:
-            H = list(range(candidate.horizon))
-            w = candidate.waste_collected()
-            total_time = candidate.total_time()
-        H.reverse()
-        print(H)
-        i = 0
-        for h in H:
-            if len(candidate.routes()[h]) == 2:
-                continue
+            self.update_waste_swap()
 
-            for pos in range(1, len(candidate.routes()[h])-1):
+    def update_time_swap(self):
+        time_constraint = False
+        while not time_constraint and not self.waste_swap.empty:
+            max_waste = self.waste_swap['total_waste'].max()
 
-                for p in self.points_h_available():
-                    if not self.tabu_p_h(p, h) and p not in candidate.routes()[h]:
-                        i += 1
+            rows_to_update = self.waste_swap[(self.waste_swap['total_waste'] == max_waste) &
+                                            (self.waste_swap['total_time'] == -1)
+                                            ]
+
+            for ind in rows_to_update.index:
+
+                p1 = rows_to_update.loc[ind, 'p1']
+                h1 = rows_to_update.loc[ind, 'h1']
+                p2 = rows_to_update.loc[ind, 'p2']
+                h2 = rows_to_update.loc[ind, 'h2']
+
+                routes = self.routes()
+
+                routes[h1][routes[h1].index(p1)] = p2
+                routes[h2][routes[h2].index(p2)] = p1
 
 
-                        new = candidate.copy()
-                        new.change_point(p, h, pos)
+                times = self.time_h()
 
-                        if new.time_constraint():
+                times[h1] = self.waste_collection.calculate_route_time(routes[h1])
+                times[h2] = self.waste_collection.calculate_route_time(routes[h2])
 
-                            if new.waste_collected() > w:
-                                print(new.waste_collected() - w)
-                                candidate = new.copy()
-                                w = new.waste_collected()
-                                total_time = candidate.total_time()
-                                self.add_tabu({p: list(range(new.horizon))})
-                                #self.delete_h([h])
+                if max(times) > self.max_time:
+                    self.waste_swap.drop(ind, inplace=True)
+                else:
+                    self.waste_swap.loc[ind, 'total_time'] = sum(times)
 
-                            elif new.waste_collected() == w and new.total_time() < total_time:
-                                candidate = new.copy()
-                                w = new.waste_collected()
-                                total_time = candidate.total_time()
-                                self.add_tabu({p: list(range(new.horizon))})
-                                #self.delete_h([h])
+            if max_waste == self.waste_swap['total_waste'].max():
+                time_constraint = True
 
-        return candidate
+    def swap_best(self):
+        self.update_waste_swap()
+        while not self.waste_swap.empty:
 
-    def random_change_point(self):
-        new_route = self.collection.copy()
-        r = new_route.routes()
+            self.update_time_swap()
+
+            if self.waste_swap.empty:
+                break
+
+            aux = self.waste_swap[(self.waste_swap['total_waste'] == self.waste_swap['total_waste'].max())]
+
+            ind = random.choice(aux.index)
+
+            p1 = aux.loc[ind, 'p1']
+            h1 = aux.loc[ind, 'h1']
+            p2 = aux.loc[ind, 'p2']
+            h2 = aux.loc[ind, 'h2']
+
+            self.change_point(p2, h1, self.routes()[h1].index(p1))
+            self.change_point(p1, h2, self.routes()[h2].index(p2))
+
+            self.update_waste_swap(h=[h1, h2])
+            self.tabu.update(self.routes())
+
+
+class NeighborhoodChange:
+
+    def change_point(self, point, h, position):
+        self.collection[h].change_point(point, position)
+        self.update_waste_collected_point()
+
+    def change_random(self):
+
+        r = self.routes()
 
         h = [h for h, r in enumerate(r) if len(r) > 2]
 
@@ -349,110 +185,78 @@ class Neighborhood(Tabu):
             pos = random.choice(range(1, len(r[h]) - 1))
             points = [p for p, h_aux in self.points_h_available().items() if h in h_aux]
             points = [p for p in points if p != r[h][pos]]
-            p = random.choice(points)
-            new_route.change_point(p, h, pos)
-        return new_route
+            p_new = random.choice(points)
+            self.change_point(p_new, h, pos)
 
-    def remove_best_neighbors(self, new_collection=None):
-        if new_collection is None:
-            new_collection = self.collection.copy()
+            self.tabu.update(self.routes())
 
-        candidate = new_collection.copy()
-
-        H = [h for h in range(candidate.horizon) if candidate.time_h()[h] > candidate.max_time and len(candidate.routes()[h]) > 2]
-
-        news = [self.best_collection]
-        for h in H:
-            news2 = []
-            for pos in range(1, len(candidate.routes()[h]) - 2):
-                new = candidate.copy()
-                new.remove_point(h, pos)
-                if new.time_h()[h] <= new.max_time:
-                    news2.append(new)
-
-            news2 = self.tiebreaker(news2)
-            if not self.collection.time_constraint():
-                candidate = news2.copy()
-            if news2.time_constraint():
-                news.append(news2)
+            self.update_waste_add()
+            self.update_waste_swap()
 
 
-        candidate = self.tiebreaker(news)
+    def update_time_change(self):
+        time_constraint = False
+        while not time_constraint and not self.waste_change.empty:
+            max_waste = self.waste_change['total_waste'].max()
 
-        return candidate
+            rows_to_update = self.waste_change[(self.waste_change['total_waste'] == max_waste) &
+                                             (self.waste_change['total_time'] == -1)
+                                             ]
 
-    def random_remove(self):
-        new_route = self.collection.copy()
-        r = new_route.routes()
+            for ind in rows_to_update.index:
 
-        h = [h for h, r in enumerate(r) if len(r) > 2]
+                p1 = rows_to_update.loc[ind, 'p1']
+                h = rows_to_update.loc[ind, 'h']
+                p2 = rows_to_update.loc[ind, 'p2']
 
-        if len(h) > 0:
-            h = random.choice(h)
 
-            pos = random.choice(range(1, len(r[h]) - 1))
+                routes = self.routes()
 
-            new_route.remove_point(h, pos)
+                routes[h][routes[h].index(p1)] = p2
 
-        return new_route
+                times = self.time_h()
 
-    def filter_routes_time_constraint(self, collection):
-        return [r for r in collection if r.time_constraint() is True]
+                times[h] = self.waste_collection.calculate_route_time(routes[h])
 
-    def tiebreaker(self, new_collection):
 
-        if len(new_collection) > 1:
-            #w = [r.diff_waste_collected() for r in new_collection]
-            #new_collection = [r for i, r in enumerate(new_collection) if w[i] == max(w)]
-
-            t = [sum(r.time_h()) for r in new_collection]
-
-            new_collection = [r for r in new_collection if sum(r.time_h()) == min(t)]
-
-        new_collection = random.choice(new_collection)
-
-        return new_collection
-
-    def fix_time_constraint(self, new_collection):
-
-        H = [h for h in range(new_collection.horizon) if new_collection.time_h()[h] > new_collection.max_time]
-        t = time.time()
-        news = []
-        while len(H) > 0:
-            h = H[0]
-            for pos in range(1, len(new_collection.routes()[h])-1):
-                new = new_collection.copy()
-                new.remove_point(h, pos)
-                if len(H) > 1:
-                    h2 = H[1]
-
-                    for pos2 in range(1, len(new_collection.routes()[h2]) - 1):
-
-                        new3 = new.copy()
-                        new3.remove_point(h2, pos2)
-                        if new3.time_constraint():
-                            news.append(new3)
+                if max(times) > self.max_time:
+                    self.waste_change.drop(ind, inplace=True)
                 else:
-                    if new.time_constraint():
-                        news.append(new)
+                    self.waste_change.loc[ind, 'total_time'] = sum(times)
+                    self.waste_change.loc[ind, 'max_time'] = max(times)
 
-            H.remove(h)
-        new = self.tiebreaker(news)
-        return new
+            if max_waste == self.waste_change['total_waste'].max():
+                time_constraint = True
 
 
-class NeighborhoodAdd:
-    def random(self, route):
+    def change_best(self):
 
-        points_h_available = self.points_h_available()
-        new_route = self.collection.copy()
+        self.calculate_waste_change(first_time=True)
+        #self.calculate_waste_change()
+        while not self.waste_change.empty:
+            print(self.waste_collected())
+            self.update_time_change()
 
-        random_point = random.choice(list(points_h_available.keys()))
-        random_h = random.choice(points_h_available[random_point])
+            current_waste = self.waste_collected()
+            aux = self.waste_change[self.waste_change['total_waste'] == self.waste_change['total_waste'].max()]
 
-        route = self.collection.routes()[random_h]
-        position = random.choice(range(len(route) - 1))
+            ind = random.choice(aux.index)
 
-        new_route.add_point(random_point, random_h, position)
+            p1 = aux['p1'][ind]
+            h = aux['h'][ind]
+            p2 = aux['p2'][ind]
 
-        return new_route
+
+            self.change_point(p2, h, self.routes()[h].index(p1))
+
+            self.tabu.update(self.routes())
+
+            self.calculate_waste_change(h, p1)
+
+            if self.waste_collected() <= current_waste:
+                break
+
+
+
+
+

@@ -5,7 +5,7 @@ import json
 def createFolderResults(path):
     os.mkdir(path)
 
-def configFile(id, waste, orig, dest, horizon, tabu, epsilon):
+def configFile(id, waste, orig, dest, horizon, tabu, epsilon, max_time):
     x = {
         'id': id,
         'waste': waste,
@@ -13,7 +13,8 @@ def configFile(id, waste, orig, dest, horizon, tabu, epsilon):
         'dest': dest,
         'horizon': horizon,
         'tabu': tabu,
-        'epsilon': epsilon
+        'epsilon': epsilon,
+        'max_time': max_time,
     }
     f = open(path+"/config.json", "a")
     f.write(json.dumps(x) + '\n')
@@ -42,11 +43,14 @@ if __name__ == '__main__':
     parser.add_argument("tabu", type=int,
                         help="tabu")
 
-    parser.add_argument("epsilon", type=bool,
+    parser.add_argument("epsilon", type=int,
+                        help="blah")
+
+    parser.add_argument("max_time", type=int,
                         help="blah")
 
     args = parser.parse_args()
-
+    print(bool(args.epsilon))
     path = 'results/' + args.id
     createFolderResults(path)
 
@@ -59,5 +63,6 @@ if __name__ == '__main__':
 
         args.horizon,
         args.tabu,
-        args.epsilon
+        bool(args.epsilon),
+        args.max_time
     )

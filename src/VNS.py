@@ -3,7 +3,7 @@ import time
 import json
 
 class VNS:
-    def __init__(self, collection, path, epsilon=False):
+    def __init__(self, collection, path, epsilon=False, max_time=240):
         self.iter = 0
         self.best_collection = collection.copy()
         self.candidate_collection = collection.copy()
@@ -13,6 +13,7 @@ class VNS:
         self.neighbor_k = 0
         self.neighbor_random_k = 0
         self.epsilon = epsilon
+        self.max_time = max_time*60
 
     def epsilon_change(self):
         epsilon = 0
@@ -89,7 +90,7 @@ class VNS:
 
     def VND(self, k_max):
         self.neighbor_k = 0
-        while self.neighbor_k <= k_max:
+        while self.neighbor_k <= k_max and self.execution_time() < self.max_time:
 
             self.neighborhood_k()
 
@@ -104,10 +105,10 @@ class VNS:
     def GVNS(self, l_max, k_max, t_max):
         self.ini_time = time.time()
         t = 0
-        while t < t_max:
+        while t < t_max and self.execution_time() < self.max_time:
             print('Iteración', t)
             self.neighbor_random_k = 0
-            while self.neighbor_random_k < k_max:
+            while self.neighbor_random_k < k_max and self.execution_time() < self.max_time:
                 self.neighbor_k = 0
                 self.random_neighbor()
                 self.print()
@@ -116,6 +117,10 @@ class VNS:
             t += 1
         print('End')
         #return t
+
+
+    def execution_time(self):
+        return time.time() - self.ini_time
 
     def print(self, best=False):
         if best:

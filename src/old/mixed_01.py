@@ -1,4 +1,4 @@
-from src.VNS2 import VNS
+from src.VNS import VNS
 from src.WasteCollection import WasteCollection
 
 

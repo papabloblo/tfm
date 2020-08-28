@@ -1,0 +1,8 @@
+
+ID="mixed_tabu50"
+python3.8 src/configFile.py $ID mixed 5 5 5 50 0 240
+
+for i in 1 2 3 4 5
+do
+  nohup python3.8 src/execution.py results/$ID $i > results/$ID/print_0$i 2> results/$ID/print_0$i &
+done

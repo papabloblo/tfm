@@ -1,0 +1,8 @@
+
+ID="paper_tabu50_epsilon"
+python3.8 src/configFile.py $ID paper 0 15 5 50 1 240
+
+for i in 1 2 3 4 5
+do
+  nohup python3.8 src/execution.py results/$ID $i > results/$ID/print_0$i 2> results/$ID/print_0$i &
+done

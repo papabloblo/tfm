@@ -1,8 +1,0 @@
-
-python3.8 src/configFile.py paper_tabu0_epsilon paper 15 5 5 0 True
-
-nohup python3.8 src/ejecucion.py results/paper_tabu0_epsilon 1 > results/paper_tabu0_epsilon/print_01 2> results/paper_tabu0_epsilon/print_01 &
-nohup python3.8 src/ejecucion.py results/paper_tabu0_epsilon 2 > results/paper_tabu0_epsilon/print_02 2> results/paper_tabu0_epsilon/print_02 &
-nohup python3.8 src/ejecucion.py results/paper_tabu0_epsilon 3 > results/paper_tabu0_epsilon/print_03 2> results/paper_tabu0_epsilon/print_03 &
-nohup python3.8 src/ejecucion.py results/paper_tabu0_epsilon 4 > results/paper_tabu0_epsilon/print_04 2> results/paper_tabu0_epsilon/print_04 &
-nohup python3.8 src/ejecucion.py results/paper_tabu0_epsilon 5 > results/paper_tabu0_epsilon/print_05 2> results/paper_tabu0_epsilon/print_05 &
