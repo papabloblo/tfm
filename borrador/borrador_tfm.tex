@@ -209,6 +209,74 @@ Vivimos en una sociedad cada vez más preocupada por el impacto
 \hypertarget{revisiuxf3n-bibliogruxe1fica}{%
 \section{Revisión bibliográfica}\label{revisiuxf3n-bibliogruxe1fica}}
 
+El problema de la recogida de residuos se engloba dentro de los
+problemas conocidos como Problema de enrutamiento de vehículos (Vehicle
+Routing Problem o VRT) enunciado por primera vez en (Dantzig and Ramser
+1959) y que puede cosiderarse como una generalización del problema del
+viajante (Traveling-Salesman Problem o TSP) ({\textbf{???}}). En el
+problema del viajante (TSP en lo que sigue) busca la ruta óptima entre
+\(n\) puntos pasando una única vez por cada uno de ellos. El problema de
+enrutamiento de vehículos (VRP en lo que sigue) trata de encontrar la
+mejor ruta para una flota de vehículos (y no solo uno, como en el TSP)
+para satisfacer la demanda de un conjunto de clientes conforme a un
+criterio de optimización. Estos dos problemas son fundamentales en el
+desarrollo de la inteligencia artificial por la cantidad de aplicaciones
+prácticas. De hecho, se suelen nombrar algunas variaciones de este
+problema:
+
+\begin{enumerate}
+\def\labelenumi{(\roman{enumi})}
+\tightlist
+\item
+  Capacitated VRP: está disponible una flota homogénea de vehículos
+  donde la restricción es la capacidad de cada vehículo,
+\item
+  VRP con ventana de tiempos: los clientes tienen que ser servidos en un
+  intervalo de tiempo específico.
+\end{enumerate}
+
+En los problemas VRP tradicionales, el objetivo se trata desde un punto
+de vista del impacto económico (habitualmente, se define algún tipo de
+coste). Sin embargo, han surgido una familia de problemas denominados
+\emph{Green Vehicle Routing Problems} (GVRP) caracterizados por tener en
+cuenta la armonización entre el impacto económico y medioambiental.
+Dentro de esta familia de problemas, se pueden ver tres grandes
+categorías (Lin et al. 2014):
+
+\begin{itemize}
+\tightlist
+\item
+  G-VRP (Green-VRP): el objetivo es optimizar el consumo de la energía
+  necesaria para el transporte,
+\item
+  Pollution Routing Problem (PRP): el objetivo es encontrar la mejor
+  planificación de rutas desde el punto de vista de la contaminación, en
+  particular, reduciendo las emisiones de carbono.
+\item
+  VRP en Reverse Logistics (VRPRL): estos problemas están relacionados
+  con aspectos de la logística inversa (traslado de materiales apra su
+  reciclado, reutilización o destrucción).
+\end{itemize}
+
+El problema de la recogida de residuos se trata en (Expósito-Márquez et
+al. 2019) donde se define formalmente el problema y se desarrolla una
+solución mediante el algoritmo Feedy Randomized Adaptative Search
+Procedure (GRASP).
+
+\begin{itemize}
+\tightlist
+\item
+  Problema:
+
+  \begin{itemize}
+  \tightlist
+  \item
+    TSP -\textgreater{} variantes
+  \end{itemize}
+\item
+  Métodos metaheurísticos. En particular búsqueda Tabú y VNS
+\end{itemize}
+
 \hypertarget{descripciuxf3n-del-problema}{%
 \section{Descripción del problema}\label{descripciuxf3n-del-problema}}
 
@@ -657,7 +725,14 @@ Los resultados computacionales que aparecen en esta sección se han
 realizado en un ordenador equipado con un procesador Intel Core i7-8700
 3.20GHz y 16 GB de memoria RAM. La implementación de la solución se ha
 realizado utilizando el lenguaje de programación Python 3.8 recogido en
-el repositorio \url{https://github.com/papabloblo/tfm}.
+el repositorio \url{https://github.com/papabloblo/tfm}. Se ha
+considerado un tiempo de ejecución de 4 horas, un tiempo asumible para
+la que la empresa de recogida pueda obbtener la planificación de las
+rutas y llevarlas a cabo. Nótese que el horizonte temporal es de 5 días
+así que, podría considerarse por parte de la empresa ejecutar el
+algoritmo diariamiente para ir recalculando las rutas si eso fuese
+posible y necesario utilizando como solución de inicial para el
+algoritmo las rutas planificadas.
 
 En la sección 6.1 se describen los datos que componen el escenario bajo
 el que se realizan las pruebas computacionales.
@@ -726,7 +801,57 @@ simétirca.
 \begin{itemize}
 \tightlist
 \item
-  Mapa de los puntos de recogida.
+  Mapa de los puntos de recogida. {[}¡ESTO HAY QUE PEDIRLO!{]}
+\end{itemize}
+
+Para comprobar el comportamiento del algoritmo en otras situaciones a la
+descrita anteriormente, se llevan a cabo ejecuciones en la que el
+llenado inicial de los puntos de recogida se obtiene aleatoriamente.
+Esto permite comprobar con generalidad el comportamiento del algoritmo.
+Como la recogida total de residuo se ve afectada por la cantidad de
+residuo inicial en cada punto de recogida, para la comparativa se ha
+utilizado el indicador en función del.
+
+Sabiendo que el llenado de los puntos de recogida se produce con la
+fórmula
+
+\[
+r_i = a_i + b_i\cdot d
+\] Si no consideramos el desbordamiento de los contenedores, el residuo
+acumulado de los puntos de recogida, considerando un horizon de \(h\)
+días sería
+
+\[
+r_i = a_i + b_i\cdot h
+\]
+
+Así, podemos tener el siguiente indicador. Sea \(f\) la cantidad de
+residuo recogido por una solución,
+
+\[
+indicador = \frac{f}{\sum_{i\in\Theta} r_i}
+\] Este indicador nos permitirá obtener el procentaje del residuo
+recogido del total de residuo generado durante el horizonte de
+planificación y poder comparar los distintos escenarios.
+
+Métrica para calcular los puntos de recogida saturados
+
+Dada una ruta \(r\), será interesante tener en cuenta la satisfacción
+del servicio que puedan percibir los usuarios. Un indicador clave es que
+los puntos de recogida no estén desbordados lo que conlleva la posible
+acumulación de residuos fuera de él o que el usuario tenga que
+desplazarse hasta otro punto de recogida cercano que no es esté
+desbordado. De aquí podemos obtener dos indicadores:
+
+\begin{itemize}
+\tightlist
+\item
+  Número de puntos de recogida que se desbordan en algún momento durante
+  el horizonte de planificación,
+\item
+  Cantidad de residuo ``desbordado''. (Diferencia entre el residuo
+  téorico y el resiudo recogido en el caso de que se produzca un
+  desbordamiento)
 \end{itemize}
 
 \hypertarget{conclusiones-y-trabajo-futuro}{%
@@ -735,6 +860,11 @@ futuro}\label{conclusiones-y-trabajo-futuro}}
 \addcontentsline{toc}{section}{Conclusiones y trabajo futuro}
 
 \hypertarget{refs}{}
+\leavevmode\hypertarget{ref-dantzig_truck_1959}{}%
+Dantzig, G. B., and J. H. Ramser. 1959. ``The Truck Dispatching
+Problem.'' \emph{Management Science} 6 (1): 80--91.
+\url{https://doi.org/10.1287/mnsc.6.1.80}.
+
 \leavevmode\hypertarget{ref-exposito-marquez_greedy_2019}{}%
 Expósito-Márquez, Airam, Christopher Expósito-Izquierdo, Julio
 Brito-Santana, and J. Andrés Moreno-Pérez. 2019. ``Greedy Randomized
@@ -754,6 +884,12 @@ Helsgaun, Keld. 2000. ``An Effective Implementation of the
 Lin--Kernighan Traveling Salesman Heuristic.'' \emph{European Journal of
 Operational Research} 126 (1): 106--30.
 \url{https://doi.org/10.1016/S0377-2217(99)00284-2}.
+
+\leavevmode\hypertarget{ref-lin_survey_2014}{}%
+Lin, Canhong, K. L. Choy, G. T. S. Ho, S. H. Chung, and H. Y. Lam. 2014.
+``Survey of Green Vehicle Routing Problem: Past and Future Trends.''
+\emph{Expert Systems with Applications} 41 (4): 1118--38.
+\url{https://doi.org/10.1016/j.eswa.2013.07.107}.
 
 \leavevmode\hypertarget{ref-mladenovic_variable_1997}{}%
 Mladenović, N., and P. Hansen. 1997. ``Variable Neighborhood Search.''
