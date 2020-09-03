@@ -19,7 +19,7 @@ class VNS:
         epsilon = 0
         if self.epsilon:
             # epsilon = max(0, (300 - self.iter) / 300)
-            epsilon = 1/(1+0.0005*(self.iter**2))
+            epsilon = 10/(1+0.0005*(self.iter**2))
 
         print(epsilon)
         return epsilon

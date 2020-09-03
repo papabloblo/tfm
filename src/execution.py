@@ -2,7 +2,6 @@ from WasteCollection import WasteCollection
 from Route import Route, RouteCollection
 from VNS import VNS
 
-import pickle
 import argparse
 import json
 
@@ -27,15 +26,8 @@ if __name__ == '__main__':
 
     waste_collection = WasteCollection(
         file_filling_rates="data/pickup-point-filling-rates-" + config['waste'] + ".csv",
-        file_times="data/times-between-pickup-points.txt",
-        random_fill_ini=True
+        file_times="data/times-between-pickup-points.txt"
     )
-
-    with open(args.path + '/fill_ini_' + args.id, 'wb') as file_fill_ini:
-        pickle.dump(waste_collection.fill_ini, file_fill_ini)
-
-    #with open('results/hola', 'rb') as file_fill_ini:
-    #    miau = pickle.load(file_fill_ini)
 
     collection = RouteCollection(waste_collection,
                                  orig=config['orig'],
