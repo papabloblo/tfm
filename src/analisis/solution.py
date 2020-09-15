@@ -148,7 +148,11 @@ def kpi_calculation(directory, read_fill_ini=False):
         data = read_results(f)
 
         if read_fill_ini:
-            with open(directory + '/fill_ini_' + f[-1], 'rb') as file_fill_ini:
+            if f[-2] == '1':
+                f2 = f[-2:]
+            else:
+                f2 = f[-1]
+            with open(directory + '/fill_ini_' + f2, 'rb') as file_fill_ini:
                 waste_collection.fill_ini = pickle.load(file_fill_ini)
 
         route_collection = collection(config, waste_collection, best_solution(data))
@@ -300,5 +304,5 @@ print_kpi('results/paper_tabu50_random', read_fill_ini=True)
 ##  - tabu: 50
 ##  - epsilon: sí
 
-print_kpi('results/paper_tabu50_random', read_fill_ini=True)
+print_kpi('results/paper_tabu50_epsilon_random', read_fill_ini=True)
 

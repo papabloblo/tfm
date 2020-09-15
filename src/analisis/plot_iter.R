@@ -13,8 +13,71 @@ extract_best <- function(f){
   return(w)
 }
 
+files <- list.files('results/mixed_tabu0', "log_", full.names = TRUE)
+
+df <- purrr::map_df(files, create_df)
+max(df$iter)
+unique(df$id)
+df2 <- df %>% 
+  group_by(id) %>% 
+  filter(iter == max(iter))
+
+df2 %>% 
+  ggplot(aes(x='hola', y = waste)) + 
+  geom_jitter()
+
+plot_jitter <- function(type, random){
+  files <- list.files("results", type, full.names = TRUE)
+  files <- files[stringr::str_ends(files, "_random", negate=!random)]
+  
+  df <- purrr::map_df(files, function(f){purrr::map_df(list.files(f, "log_", full.names = TRUE), create_df)})
+  
+  df <- df %>% 
+    group_by(id) %>% 
+    filter(iter == max(iter)) %>% 
+    ungroup() %>% 
+    mutate(
+      id = stringr::str_extract(id, "/.*/"),
+      id = stringr::str_remove_all(id, "/")
+      )
+  return(df)
+}
+
+a <- plot_jitter('mixed', F)
+
+a2 <- a
+boxplot_mixed <- a %>% 
+  mutate(id = case_when(
+    id == "mixed_tabu0" ~ "Escenario 1",
+    id == "mixed_tabu0_epsilon" ~ "Escenario 2",
+    id == "mixed_tabu50" ~ "Escenario 3",
+    id == "mixed_tabu50_epsilon" ~ "Escenario 4",
+  )) %>% 
+  ggplot(aes(x = id, y = waste)) +
+  geom_boxplot() + 
+  labs(x = "", 
+       y = "Función objetivo")
+
+ggsave("borrador/fig/boxplot_mixed.png", plot=boxplot_mixed)
 
 
+paper <- plot_jitter('paper', F)
+
+boxplot_paper <- paper %>% 
+  mutate(id = case_when(
+    id == "paper_tabu0" ~ "Escenario 1",
+    id == "paper_tabu0_epsilon" ~ "Escenario 2",
+    id == "paper_tabu50" ~ "Escenario 3",
+    id == "paper_tabu50_epsilon" ~ "Escenario 4",
+    TRUE ~ id
+  )) %>% 
+  ggplot(aes(x = id, y = waste)) +
+  geom_boxplot() + 
+  ylim(170,NA)+
+  labs(x = "", 
+       y = "Función objetivo")
+
+ggsave("borrador/fig/boxplot_paper.png", plot=boxplot_paper)
 
 library(patchwork)
 a <- (x1 | x2) 
